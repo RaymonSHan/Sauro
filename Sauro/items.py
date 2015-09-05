@@ -8,7 +8,8 @@
 import scrapy
 
 
-class SauroItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+class SauroDownItem(scrapy.Item):
+    title = scrapy.Field()
+    link = scrapy.Field()
+    content = scrapy.Field()
+
