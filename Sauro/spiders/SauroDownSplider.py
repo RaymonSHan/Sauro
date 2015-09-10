@@ -4,6 +4,13 @@ import string
 
 from Sauro.items import SauroDownItem
 
+def DefineFunction(fname, fscript):
+    return 'local ' + fname + ' = splash:jsfunc([[ function (){' + fscript + '} ]]) '
+
+def DefineLocation(fname):
+    script = 'var ishref = document.location.href; return ishref;'
+    return DefineFunction(fname, script)
+
 class MySpider(scrapy.Spider):
     name = "MySpider"
     start_urls = ["http://example.com"]
@@ -23,9 +30,35 @@ class MySpider(scrapy.Spider):
 class SauroScriptSpider(scrapy.Spider):
     name = "SauroScript"
     allowed_domains = ["stock.sohu.com"]
-    start_urls = [ "http://stock.sohu.com/stock_scrollnews.shtml" ]
+    start_urls = [ "http://stock.sohu.com/stock_scrollnews_125.shtml" ]
 
     def parse(self, response):
+        funchead = 'function main(splash) '
+        hrefList = response.xpath('//a[starts-with(@onclick,"javascript:")]')
+        for onehref in hrefList:
+            for onescript in onehref.xpath('@onclick').extract():
+                onefunc = funchead + DefineFunction('javafunc', onescript[11:])
+                hrefval = onehref.xpath('@href')[0].extract()
+                if hrefval == '#':
+                    onefunc += DefineLocation('hreffunc')
+                elif hrefval == '###':
+                    onefunc += DefineLocation('hreffunc')
+                else:
+                    onefunc += DefineLocation('hreffunc')
+                onefunc += 'splash:go(\"http://stock.sohu.com/stock_scrollnews_125.shtml\") '
+                onefunc += 'javafunc=javafunc() splash:wait(2) getreturn=hreffunc() return {getreturn=getreturn} end '
+
+                print onefunc
+                yield scrapy.Request('http://m/', self.parse_script, meta={
+                    'splash': {
+                        'args': {'lua_source': onefunc},
+                        'endpoint': 'execute'
+                    }
+                })
+
+
+
+    def parse_old(self, response):
         script = """
         function main(splash) 
             local sohufunc = splash:jsfunc([[ function (){ go(curPage+1); return false; } ]]) 
