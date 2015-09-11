@@ -2,61 +2,83 @@ import scrapy
 import string
 #import settings
 
+#import SauroTools
 from Sauro.items import SauroDownItem
+
+class const: 
+    class ConstError(TypeError):pass 
+    def __setattr__(self, name, value): 
+        if self.__dict__.has_key(name): 
+            raise self.ConstError, "Can't rebind const (%s)" %name 
+        self.__dict__[name]=value
+
+const.JAVAFUNC = 'javafunc'
+const.HREFFUNC = 'hreffunc'
+const.FUNCHEAD = 'function main(splash) '
+
+def DefineStart():
+    return const.FUNCHEAD
 
 def DefineFunction(fname, fscript):
     return 'local ' + fname + ' = splash:jsfunc([[ function (){' + fscript + '} ]]) '
 
-def DefineLocation(fname):
+def DefineJavaScript(script):
+    return DefineFunction(const.JAVAFUNC, script)
+
+def DefineLocation():
     script = 'var ishref = document.location.href; return ishref;'
-    return DefineFunction(fname, script)
+    return DefineFunction(const.HREFFUNC, script)
 
-class MySpider(scrapy.Spider):
-    name = "MySpider"
-    start_urls = ["http://example.com"]
+def DefineSplashGo(script):
+    return 'splash:go(\"' + script + '\") '
 
-    def start_requests(self):
-        for url in self.start_urls:
-            yield scrapy.Request(url, self.parse_script, meta={
-                'splash': {
-                    'endpoint': 'render.html',
-                    'args': {'wait': 0.5}
-                }
-            })
+def DefineAssign(vname, fname=None):
+    if fname == None:
+        return vname + '=' + vname + '() '
+    else:
+        return vname + '=' + fname + '() '
 
-    def parse_script(self, response):
-        print response.xpath('//title').extract()
+def DefineWait(waittime):
+    return 'splash:wait(' + str(waittime) + ') '
+
+def DefineProcess(waittime):
+    return DefineWait(waittime) + DefineAssign(const.JAVAFUNC) + DefineWait(waittime) + DefineAssign(const.HREFFUNC)
+
+def DefineEnd():
+    return 'return {getreturn=' + const.HREFFUNC + '} end '
+
+def DefineMeta(func):
+    return {
+        'splash': {
+            'args': {'lua_source': func},
+            'endpoint': 'execute'
+        }
+    }
 
 class SauroScriptSpider(scrapy.Spider):
     name = "SauroScript"
     allowed_domains = ["stock.sohu.com"]
-    start_urls = [ "http://stock.sohu.com/stock_scrollnews_125.shtml" ]
+    start_urls = [ "http://stock.sohu.com/stock_scrollnews_128.shtml" ]
+
 
     def parse(self, response):
-        funchead = 'function main(splash) '
         hrefList = response.xpath('//a[starts-with(@onclick,"javascript:")]')
         for onehref in hrefList:
             for onescript in onehref.xpath('@onclick').extract():
-                onefunc = funchead + DefineFunction('javafunc', onescript[11:])
+                onefunc = DefineStart()
+                onefunc += DefineFunction(const.JAVAFUNC, onescript[11:])
                 hrefval = onehref.xpath('@href')[0].extract()
                 if hrefval == '#':
-                    onefunc += DefineLocation('hreffunc')
+                    onefunc += DefineLocation()
                 elif hrefval == '###':
-                    onefunc += DefineLocation('hreffunc')
+                    onefunc += DefineLocation()
                 else:
-                    onefunc += DefineLocation('hreffunc')
-                onefunc += 'splash:go(\"http://stock.sohu.com/stock_scrollnews_125.shtml\") '
-                onefunc += 'javafunc=javafunc() splash:wait(2) getreturn=hreffunc() return {getreturn=getreturn} end '
+                    onefunc += DefineLocation()
+                onefunc += DefineSplashGo(response.url)
+                onefunc += DefineProcess(2)
+                onefunc += DefineEnd()
 
-                print onefunc
-                yield scrapy.Request('http://m/', self.parse_script, meta={
-                    'splash': {
-                        'args': {'lua_source': onefunc},
-                        'endpoint': 'execute'
-                    }
-                })
-
-
+                yield scrapy.Request(response.url, self.parse_script, meta=DefineMeta(onefunc))
 
     def parse_old(self, response):
         script = """
@@ -70,18 +92,12 @@ class SauroScriptSpider(scrapy.Spider):
             return {sohuf=sohuf, getfc=getf} 
         end
         """
-        #script = 'function main(splash) splash:go("http://stock.sohu.com/stock_scrollnews.shtml") splash:wait(0.5) local title = splash:evaljs("document.title") return {title=title} end'
-        #hrefList = response.xpath('//a[starts-with(@onclick,"javascript")]/@onclick')
-        #for onehref in hrefList:
         yield scrapy.Request('http://m/', self.parse_script, meta={
             'splash': {
                 'args': {'lua_source': script},
                 'endpoint': 'execute'
             }
         })
-
-
-
 
 
     def parse_script(self, response):
@@ -215,3 +231,30 @@ class SauroDownSpider(scrapy.Spider):
         article = ' '.join(articleList)
         article = article.replace('<p>', '')
         article = article.replace('</p>', '')
+
+
+class MySpider(scrapy.Spider):
+    name = "MySpider"
+    allowed_domains = ["stock.sohu.com"]
+    start_urls = [ "http://stock.sohu.com/stock_scrollnews_125.shtml" ]
+
+    def parse(self, response):
+        signList = response.xpath('/html/body//div')
+        for onesign in signList:
+
+            try:
+                item['price'] = site.xpath('ul/li/div/a/span/text()').extract()[0]
+            except IndexError:
+                item['price'] = site.xpath('ul/li/a/span/text()').extract()[0]
+
+
+
+            print string('onesign.xpath("@id")')[0].extract();
+            print onesign.xpath('@class')[0].extract()
+            print onesign
+            print ('-' * 48)
+
+    def parse_script(self, response):
+        print response.xpath('//title').extract()
+
+
