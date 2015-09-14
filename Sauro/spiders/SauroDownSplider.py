@@ -2,7 +2,11 @@ import scrapy
 import json
 import string
 
+
+from scrapy import signals
+from scrapy.xlib.pydispatch import dispatcher
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
+
 
 from Sauro.items import SauroDownItem
 
@@ -56,18 +60,67 @@ def DefineMeta(func):
         }
     }
 
+def ReturnExpr(responseurl):
+    spliturl = responseurl.split('/')
+    retstr = 'S'
+    for onesp in spliturl:
+        splen = len(onesp)
+        if splen > 9:
+            retstr += '-'
+        if splen > 0:
+            retstr += str(splen)
+    return retstr
+
 class SauroScriptSpider(scrapy.Spider):
     name = "SauroScript"
     allowed_domains = ["stock.sohu.com"]
-    start_urls = [ "http://stock.sohu.com/stock_scrollnews_152.shtml" ]
+#    start_urls = [ "http://stock.sohu.com/" ]
+#    start_urls = [ "http://stock.sohu.com/stock_scrollnews_152.shtml" ]
+    start_urls = [ "http://stock.sohu.com/20150914/n421098148.shtml" ]
+    mydict = {}
 
-    def parse_link(self, response):
-        lx = SgmlLinkExtractor()  
-        urls = lx.extract_links(response)
-        for oneurl in urls:
-            print oneurl.url + ' ' + oneurl.text.encode('utf-8')
+    def __init__(self):
+        dispatcher.connect(self.finalize,signals.engine_stopped)
+
+    def finalize(self):
+        sortdict = sorted(self.mydict.items(), key=lambda d: len(d[1]), reverse=True)
+        for (k, v) in sortdict:
+            print k;
+            print len(v);
+            print v
+#        for (k, v) in self.mydict.items():
+#            print "dict[%s] =" % k, len(v)
 
     def parse(self, response):
+        for onesign in response.xpath('//*[not(name()="script") and not(name()="style")]/text()'):
+            signlen = len(onesign.extract())
+            if signlen > 20:
+                print signlen;
+                print onesign.extract()
+#            signlen = len(onesign.xpath('text()').extract())
+#            if signlen > 10:
+#                print signlen;
+#                print onesign.xpath('text()')
+
+
+    def parse_dict(self, response):
+        lx = SgmlLinkExtractor()
+        urls = lx.extract_links(response)
+        for oneurl in urls:
+            returl = ReturnExpr(oneurl.url)
+
+            try:
+                self.mydict[returl].append(oneurl)
+#                self.mydict[returl] += 1
+            except KeyError:
+                self.mydict[returl] = []
+                self.mydict[returl].append(oneurl)
+#                self.mydict[returl] = 1
+#
+#            print self.mydict[returl];
+#            print oneurl.url + ' ' + oneurl.text.encode('utf-8')
+            
+    def parse_href(self, response):
         hrefList = response.xpath('//a[starts-with(@onclick,"javascript:")]')
         for onehref in hrefList:
             for onescript in onehref.xpath('@onclick').extract():
@@ -92,13 +145,6 @@ class SauroScriptSpider(scrapy.Spider):
         scripturl = response.urljoin(jsonresponse['getreturn'])
         yield scrapy.Request(scripturl, self.parse)
 
-
-
-    def parse_test(self, response):
-         jsonresponse = json.loads(response.body_as_unicode())
-         item = MyItem()
-         item["firstName"] = jsonresponse["firstName"]             
-         return item
 
 
 class SauroDownSpider(scrapy.Spider):

@@ -1,0 +1,334 @@
+
+* BROWSER
+use py
+http://scrapy.org/download/
+http://www.spiderfoot.net/download/
+
+
+top 50 list
+http://bigdata-madesimple.com/top-50-open-source-web-crawlers-for-data-mining/
+
+36 crawler
+http://www.findbestopensource.com/tagged/webcrawler
+
+| name           | url                                | desc                                     |
+|----------------+------------------------------------+------------------------------------------|
+| GNU Wget       | https://www.gnu.org/software/wget/ | too old, no desc to javascript           |
+| DataparkSearch | http://www.dataparksearch.org/     | including some JavaScript link decoding. |
+| HTTrack        | http://www.httrack.com/            | it more look like a reocrder, not spider |
+|                |                                    |                                          |
+
+all page have said, should do program for ajax POST in Scrapy, the most recommend sprider now.
+http://stackoverflow.com/questions/8550114/can-scrapy-be-used-to-scrape-dynamic-content-from-websites-that-are-using-ajax
+
+
+v8
+http://izs.me/v8-docs/v8_8h.html
+
+
+useful 
+http://my.oschina.net/u/1024140/blog/119752  !!
+    https://github.com/scrapinghub
+http://www.cnblogs.com/MingZznet/articles/3210052.html
+http://qinxuye.me/article/cola-a-distributed-crawler-framework/ cola
+http://blog.dutchcoders.io/using-scrapy-and-pyv8-to-scrape-inline-javascript/ v8 pyv8
+https://cnodejs.org/topic/51b13d7d555d34c678fb3e88 nodejs mongoDB
+
+
+http://codemirror.net/1/ unknown yet
+
+http://www.jb51.net/article/57183.htm very beginning
+http://blog.csdn.net/zzllabcd/article/details/21398163 install step
+http://blog.csdn.net/gugugujiawei/article/details/42968745 good step
+
+
+http://splash.readthedocs.org/en/latest/scripting-tutorial.html
+goin
+
+* DONE INSTALL SprapingHub
+  CLOSED: [2015-08-27 Thu 14:48]
+TOTAL: https://github.com/scrapinghub 
+USE: scrapy
+USE: splash
+
+** INSTALL scrapy
+scrapy:  https://github.com/scrapinghub/scrapy
+REQ: python v2.7
+RUN: sudo pip install scrapy
+DOC: http://doc.scrapy.org/en/latest/
+
+** INSTALL docker
+docker request by splash : http://docs.docker.com/linux/step_one/
+RUN: sudo wget -qO- https://get.docker.com/ | sh
+
+** INSTALL splash
+splash: http://splash.readthedocs.org/en/latest/install.html
+REQ: docker
+RUN: sudo docker pull scrapinghub/splash
+DOC: http://splash.readthedocs.org/en/latest/scripting-tutorial.html
+
+** RUN splash
+splash
+RUN: sudo docker run -p 8050:8050 scrapinghub/splash
+TRY: curl 'http://127.0.0.1:8050/execute?lua_source=function+main%28splash%29%0D%0A++return+%27hello%27%0D%0Aend' 
+    RETURN:hello
+
+** INSTALL scrapyjs
+scrapyjs: https://github.com/scrapinghub/scrapy-splash
+RUN: sudo pip install scrapyjs
+MODI: settings.py: 
+
+* DONE LEARN Lua basic
+  CLOSED: [2015-08-27 Thu 16:09]
+Lua: http://tylerneylon.com/a/learn-lua/
+| Lua                                             | C++                         | equ / comment                     |
+|-------------------------------------------------+-----------------------------+-----------------------------------|
+| --                                              | //                          |                                   |
+| --[[ comment --] ]                              | /* comment */               | ] ] should be ]]                  |
+| num = 42                                        | double num = 42;            | 64bit, 52bit for base             |
+| s = 'immutable'                                 | const char *s ="immutable"; |                                   |
+| s = [[ multi                                    | char *s =" multi \          |                                   |
+| ...... line ] ]                                 | ...... line ";              | ] ] should be ]]                  |
+| t = nil                                         |                             | for garbage                       |
+|-------------------------------------------------+-----------------------------+-----------------------------------|
+| while a<10 do a=a+1 end                         |                             |                                   |
+| if then elseif then else end                    |                             |                                   |
+| for i = 100, 1, -1 do j = j + 1 end             |                             |                                   |
+| repeat i = i-1 until i = 0                      |                             |                                   |
+| if not i ~= 1 then end                          | ~= !=                       |                                   |
+| foo = unDefine                                  |                             | foo = nil                         |
+|-------------------------------------------------+-----------------------------+-----------------------------------|
+| function foo(n) return n end                    |                             |                                   |
+| function f(x) return x * x end                  |                             | f = function (x) return x * x end |
+| print 'hello'                                   |                             | print ('hello')                   |
+| for key, val in pairs(u) do print(key, val) end |                             | in, pairs are keywords            |
+| for i = 1, #v do print(v[i]) end                | #v sizeof(v)                |                                   |
+| print('I say ' .. self.sound)                   | .. strcat()                 |                                   |
+
+* DONE LEARN splash tutorial
+  CLOSED: [2015-08-27 Thu 18:56]
+splash : http://splash.readthedocs.org/en/latest/scripting-tutorial.html
+Basic UI : http://127.0.0.1:8050/
+Author's reason : https://www.reddit.com/r/Python/comments/2xp5mr/handling_javascript_in_scrapy_with_splash/
+
+* DONE TRY splash doing.
+  CLOSED: [2015-08-28 Fri 17:05]
+the way use js for href : http://jingyan.baidu.com/article/c45ad29cf6c075051653e24d.html
+
+the way to run js and get result
+curl -X POST -H 'content-type: application/json' \
+    -d '{"js_source": "javascript:go(curPage+1);return false;", "url": "http://stock.sohu.com/stock_scrollnews_25.shtml", "script": "1"}' \
+    'http://localhost:8050/render.json'
+
+curl -X POST -H 'content-type: application/json' \
+    -d '{"js_source": "function getContents(){ go(curPage+1); return document.location.href; }; getContents();", "url": "http://stock.sohu.com/stock_scrollnews_25.shtml", "script": "1"}' \
+    'http://localhost:8050/render.json'
+
+curl -X POST -H 'content-type: application/javascript' \
+    -d 'function getContents(){ go(curPage+1); return document.location.href; }; getContents();' \
+    'http://localhost:8050/render.json?url=http://stock.sohu.com/stock_scrollnews_25.shtml&script=1'
+
+curl -X POST -H 'content-type: application/json' \
+    -d '{"lua_source": "function main(splash) splash:go(\"http://stock.sohu.com/stock_scrollnews_25.shtml\") local title=splash:runjs(\"javascript:go(curPage+1);\") splash:wait(1) local href=splash:evaljs(\"document.location.href;\") return {title=title, href=href} end" }' \
+    'http://localhost:8050/execute'
+
+all the four are rational, but should sleep after run the js. there are no sleep in js, only in lua.
+And 0.2s is not enough, at least 0.3s in my T420. or it return the preview href before js run.
+
+curl -X POST -H 'content-type: application/json' \
+    -d '{"lua_source": "function main(splash) splash:go(\"http://stock.sohu.com/stock_scrollnews_25.shtml\") local title=splash:runjs(\"javascript:go(curPage+1);return false;\") splash:wait(1) local href=splash:evaljs(\"document.location.href;\") return {title=title, href=href} end" }' \
+    'http://localhost:8050/execute'
+
+but the real js, with "return false" addition, return bad. I know the reason why js in sohu seem so strange, everything is trap for splash.
+so splash may be pause.
+
+curl -X POST -H 'content-type: application/json' \
+    -d '{"lua_source": "function main(splash) local sohufunc = splash:jsfunc([[ function (){ go(curPage+1); return false; } ]]) local getfunc = splash:jsfunc([[ function (){ var ishref = document.location.href; return ishref;} ]]) splash:go(\"http://stock.sohu.com/stock_scrollnews_125.shtml\") sohuf=sohufunc() splash:wait(1) getf=getfunc() return {sohuf=sohuf, getfc=getf} end" }' \
+    'http://localhost:8050/execute'
+
+only this is OK
+
+* TODO LEARN python DOING ex40
+python: http://learnpythonthehardway.org/book/
+put in top of .py for encode : (in ex1) -*- coding: utf-8 -*-
+| python                                                                  | C++    | comment                                         |
+|-------------------------------------------------------------------------+--------+-------------------------------------------------|
+| #                                                                       | //     |                                                 |
+| print "He's got %s eyes and %s hair." % (my_eyes, my_hair)              |        | print more like MARCO not func                  |
+| %r                                                                      |        | raw format, string store with ''                |
+| print "." * 10                                                          |        | ..........                                      |
+|                                                                         |        | every print do \r\n, unless ',' at last         |
+| print """ multi lines """                                               |        | %% for %                                        |
+| age = raw_input("How old are you? ")                                    |        |                                                 |
+| from sys import argv                                                    | **argv | from argv0                                      |
+| txt = open(filename, 'w') \  txt.read() \ write() \ close()             |        |                                                 |
+| ... truncate() \ readline() \ len() \ seek()                            |        |                                                 |
+| from os.path import exists \ exists(file)                               |        |                                                 |
+| def print(*args): \  arg1, arg2 = args \  print "%r, %r" % (arg1, arg2) |        | func body must with blank ahead                 |
+| if cond: elif cond: else:                                               |        |                                                 |
+| for val in range(x,y): \ while cond:                                    |        |                                                 |
+| keywords                                                                |        | http://learnpythonthehardway.org/book/ex37.html |
+| print '#'.join(stuff[3:7])                                              |        |                                                 |
+
+* DONE LEARN scrapy : DONE FAQ
+  CLOSED: [2015-09-01 Tue 14:47]
+scrapy tutorial: http://doc.scrapy.org/en/latest/intro/tutorial.html
+
+XPath expression:
+learn more: http://zvon.org/comp/r/tut-XPath_1.html, http://blog.scrapinghub.com/2014/07/17/xpath-tips-from-the-web-scraping-trenches/
+//div[@class="mine"] : selects all div elements which contain an attribute class="mine"
+response.xpath('//ul/li/a/@href').extract() : return all link in body
+scrapy crawl dmoz -o items.json : save into file
+
+** scrapy command
+| create new project              | scrapy startproject <project_name>             | Global  |
+| create new splider              | scrapy genspider [-t template] <name> <domain> | Project |
+| run splider                     | scrapy crawl <spider>                          | Project |
+| get url                         | scrapy fetch <url>                             | Global  |
+| open browser to view            | scrapy view <url>                              | Global  |
+| get url and analysis by splider | scrapy parse <url> [options]                   | Project |
+
+** splider
+the start of splider start_requests(): \  make_requests_from_url(start_urls)
+
+useful command :
+response.xpath('//a[contains(@href, "image")]/@href').extract()
+divs = response.xpath('//div') \ for p in divs.xpath('.//p'): \ ... print p.extract()    // .// means inside //div, or use 'p'
+sel.xpath('//li[re:test(@class, "item-\d$")]//@href').extract()   // with regular
+sel = Selector(text=doc, type="html")   // doc is string, for extract more
+https://github.com/AmbientLighter/rpn-fas/blob/master/fas/spiders/rnp.py : example
+http://doc.scrapy.org/en/latest/topics/practices.html#avoiding-getting-banned : avoid banned
+https://www.91ri.org/11469.html : some info about splider
+
+* DONE LEARN XPath
+  CLOSED: [2015-09-01 Tue 23:59]
+http://zvon.org/xxl/XPathTutorial/General/examples.html
+
+| /                                                                             | absolute path                 |                              |
+| //                                                                            | from any level                |                              |
+| /*/level                                                                      | * : any name                  |                              |
+| /AAA/BBB[last()]                                                              |                               |                              |
+| //BBB[@id]                                                                    |                               | <BBB id = "xxx"/>            |
+| //BBB[not(@*)]                                                                | without attr                  | <BBB />                      |
+| //BBB[@name='bbb']                                                            |                               | <BBB name = "bbb"/>          |
+| //BBB[normalize-space(@name)='bbb']                                           | "bbb" is ok too               | <BBB name = " bbb "/>        |
+| //*[count(*)=2]                                                               | anyone with two child         | <DDD> <BBB /> <BBB /> </DDD> |
+| //*[name()='BBB']                                                             | name() is func                | <BBB />    <BBB id = "xxx"/> |
+| //*[starts-with(name(),'B')]                                                  |                               | <BBB />    <BBC />           |
+| //*[string-length(name()) &lt 3]                                              |                               | <Q />      <BB />            |
+| /AAA/EEE [or] //BBB                                                           | normal [or]                   |                              |
+| /child::AAA/child::BBB                                                        | child can be omit             | /AAA/BBB                     |
+| //CCC/descendant::DDD                                                         | after any level               |                              |
+| //DDD/parent::*                                                               |                               | <EEE> <DDD /> </EEE>         |
+| //FFF/ancestor::*                                                             | all level parent              |                              |
+| /AAA/BBB/following-sibling::*                                                 | all after that, in same level |                              |
+| /AAA/XXX/preceding-sibling::*                                                 | all before it, in same level  |                              |
+| //ZZZ/following::*                                                            | all after it, all level       |                              |
+| //BBB[position() mod 2 = 0 ]                                                  | start with 1                  |                              |
+| //BBB[position() = floor(last() div 2) or position() = ceiling(last() div 2)] |                               |                              |
+
+http://blog.csdn.net/xuandhu/article/details/338934
+
+
+* TODO CODE Sauro
+
+** try shell 
+scrapy shell "http://stock.sohu.com/stock_scrollnews.shtml"
+response.xpath('//ul/li/text()').extract()
+response.xpath('//div[@class="f14list"]/descendant::a/@href').extract()
+response.xpath('//div[@class="main area"]/descendant::div[@class="f14list"]/descendant::a/@href').extract()
+
+to run : scrapy crawl Sauro
+
+** try splash
+run splash : sudo docker run -p 8050:8050 scrapinghub/splash
+
+
+* TODO LEARN
+Lua: http://www.lua.org/pil/contents.html
+
+
+Sauropy  Sauropsida
+Eublepy  Eublepharis
+
+Sauro
+
+emergency
+Sauropsida
+Eublepharis
+Suereesayas
+
+http://pan.baidu.com/s/1qWn9cSW
+https://www.quora.com/Is-there-a-better-crawler-than-Scrapy
+
+
+
+
+http://www.oschina.net/question/269120_133286
+http://blog.csdn.net/u012150179/article/details/34913315
+  not used http://www.2cto.com/os/201406/311992.html
+
+http://blog.csdn.net/column/details/younghz-scrapy.html many oked
+http://blog.csdn.net/zzllabcd/article/details/21380267 easy example for webkit javascript
+
+
+http://www.v2ex.com/t/135633
+
+
+
+http://www.w3.org/TR/xpath-functions/ w3c xpath
+http://stackoverflow.com/questions/11744465/xpath-difference-between-node-and-text node() text()
+http://stackoverflow.com/questions/14076399/downloader-middleware-to-ignore-all-requests-to-a-certain-url-in-scrapy create downloadmiddleware
+http://dh.obdurodon.org/functions.html xpath function
+
+http://blog.csdn.net/heiyeshuwu/article/details/42170017 scrapy + webkit
+http://www.jb51.net/article/34156.htm void() href='#'
+http://blog.chedushi.com/archives/6488 not ban
+
+
+http://stock.sohu.com/20150907/n420528997.shtml
+http://blog.163.com/yaoyingying681@126/blog/static/109463675201191210280802/ string in python
+
+
+http://blog.csdn.net/arbel/article/details/7795504 some adv for scrapy, 'SgmlLinkExtractor'
+
+http://my.oschina.net/lpe234/blog/342741 adv scarpy should read
+http://blog.csdn.net/iloveyin/article/details/21468641 add more para in python
+def parse(self,response):
+    yield Request(url, callback=lambda response, typeid=5: self.parse_type(response,typeid))
+
+http://blog.csdn.net/tianmohust/article/details/7621424 dict in python ! very good !
+
+
+def parse_type(self,response, typeid):
+    print typeid
+
+
+
+        response.xpath('//div[@itemprop="articleBody"]/text()').extract().encode('utf-8')
+
+
+<div id="root">
+  include1
+  <div id="useful1">
+    include2
+      <div id="any">
+        include3
+      </div>
+  </div>
+  <div id="useful2">
+    include4
+    <div id="useless">
+      exclude1
+      <div id="any">
+        exclude2
+      </div>
+      exclude3
+    </div>
+  </div>
+  include5
+</div>
+
+
+i need 'include1 include2 include3 include4'
+the most crazy is how to include1 & 5
