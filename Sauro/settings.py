@@ -49,13 +49,6 @@ HTTPCACHE_STORAGE = 'scrapyjs.SplashAwareFSCacheStorage'
 #SPIDER_MIDDLEWARES = {
 #    'Sauro.middlewares.MyCustomSpiderMiddleware': 543,
 #}
-SPIDER_MIDDLEWARES = {
-    'scrapy.spidermiddlewares.httperror.HttpErrorMiddleware': None,
-    'scrapy.spidermiddlewares.offsite.OffsiteMiddleware': None,
-    'scrapy.spidermiddlewares.referer.RefererMiddleware': None,
-    'scrapy.spidermiddlewares.urllength.UrlLengthMiddleware': None,
-    'scrapy.spidermiddlewares.depth.DepthMiddleware': None,
-}
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
@@ -63,21 +56,7 @@ SPIDER_MIDDLEWARES = {
 #    'Sauro.middlewares.MyCustomDownloaderMiddleware': 543,
 #}
 DOWNLOADER_MIDDLEWARES = {
-    'scrapy.downloadermiddlewares.robotstxt.RobotsTxtMiddleware': None,
-    'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware': None,
-    'scrapy.downloadermiddlewares.downloadtimeout.DownloadTimeoutMiddleware': None,
-    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
-    'scrapy.downloadermiddlewares.retry.RetryMiddleware': None,
-    'scrapy.downloadermiddlewares.defaultheaders.DefaultHeadersMiddleware': None,
-    'scrapy.downloadermiddlewares.redirect.MetaRefreshMiddleware': None,
-    'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': None,
-    'scrapy.downloadermiddlewares.redirect.RedirectMiddleware': None,
-    'scrapy.downloadermiddlewares.cookies.CookiesMiddleware': None,
     'scrapyjs.SplashMiddleware': 725,
-    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': None,
-    'scrapy.downloadermiddlewares.chunked.ChunkedTransferMiddleware': None,
-    'scrapy.downloadermiddlewares.stats.DownloaderStats': None,
-    'scrapy.downloadermiddlewares.httpcache.HttpCacheMiddleware': None,
 }
 
 # Enable or disable extensions

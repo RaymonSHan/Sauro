@@ -1,8 +1,9 @@
 import scrapy
+import json
 import string
-#import settings
 
-#import SauroTools
+from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
+
 from Sauro.items import SauroDownItem
 
 class const: 
@@ -58,8 +59,13 @@ def DefineMeta(func):
 class SauroScriptSpider(scrapy.Spider):
     name = "SauroScript"
     allowed_domains = ["stock.sohu.com"]
-    start_urls = [ "http://stock.sohu.com/stock_scrollnews_128.shtml" ]
+    start_urls = [ "http://stock.sohu.com/stock_scrollnews_152.shtml" ]
 
+    def parse_link(self, response):
+        lx = SgmlLinkExtractor()  
+        urls = lx.extract_links(response)
+        for oneurl in urls:
+            print oneurl.url + ' ' + oneurl.text.encode('utf-8')
 
     def parse(self, response):
         hrefList = response.xpath('//a[starts-with(@onclick,"javascript:")]')
@@ -80,28 +86,19 @@ class SauroScriptSpider(scrapy.Spider):
 
                 yield scrapy.Request(response.url, self.parse_script, meta=DefineMeta(onefunc))
 
-    def parse_old(self, response):
-        script = """
-        function main(splash) 
-            local sohufunc = splash:jsfunc([[ function (){ go(curPage+1); return false; } ]]) 
-            local getfunc = splash:jsfunc([[ function (){ var ishref = document.location.href; return ishref;} ]]) 
-            splash:go(\"http://stock.sohu.com/stock_scrollnews_125.shtml\") 
-            sohuf=sohufunc() 
-            splash:wait(2) 
-            getf=getfunc() 
-            return {sohuf=sohuf, getfc=getf} 
-        end
-        """
-        yield scrapy.Request('http://m/', self.parse_script, meta={
-            'splash': {
-                'args': {'lua_source': script},
-                'endpoint': 'execute'
-            }
-        })
-
 
     def parse_script(self, response):
-        print response.xpath('/*').extract()
+        jsonresponse = json.loads(response.body_as_unicode())
+        scripturl = response.urljoin(jsonresponse['getreturn'])
+        yield scrapy.Request(scripturl, self.parse)
+
+
+
+    def parse_test(self, response):
+         jsonresponse = json.loads(response.body_as_unicode())
+         item = MyItem()
+         item["firstName"] = jsonresponse["firstName"]             
+         return item
 
 
 class SauroDownSpider(scrapy.Spider):
@@ -151,9 +148,6 @@ class SauroDownSpider(scrapy.Spider):
         for article in artList:#.xpath('string(.)'):
             print article.extract().encode('utf-8')
             print ('-' * 40)
-
-
-
 
 
 #        print article.extract().encode('utf-8')
@@ -257,4 +251,21 @@ class MySpider(scrapy.Spider):
     def parse_script(self, response):
         print response.xpath('//title').extract()
 
-
+    def parse_old(self, response):
+        script = """
+        function main(splash) 
+            local sohufunc = splash:jsfunc([[ function (){ go(curPage+1); return false; } ]]) 
+            local getfunc = splash:jsfunc([[ function (){ var ishref = document.location.href; return ishref;} ]]) 
+            splash:go(\"http://stock.sohu.com/stock_scrollnews_125.shtml\") 
+            sohuf=sohufunc() 
+            splash:wait(2) 
+            getf=getfunc() 
+            return {sohuf=sohuf, getfc=getf} 
+        end
+        """
+        yield scrapy.Request('http://m/', self.parse_script, meta={
+            'splash': {
+                'args': {'lua_source': script},
+                'endpoint': 'execute'
+            }
+        })
