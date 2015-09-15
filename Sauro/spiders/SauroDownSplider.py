@@ -20,7 +20,10 @@ class const:
 const.JAVAFUNC = 'javafunc'
 const.HREFFUNC = 'hreffunc'
 const.FUNCHEAD = 'function main(splash) '
-const.TEXTLEN = 50
+const.TEXTLEN = 100
+
+const.HOST = 'http://finance.sina.com.cn/stock/'
+const.ALLOW = 'finance.sina.com.cn'
 
 def DefineStart():
     return const.FUNCHEAD
@@ -72,7 +75,7 @@ def ReturnExpr(responseurl):
             retstr += str(splen)
     return retstr
 
-def GetSingleDiv(onediv):
+def GetSingleDiv(onediv):          # not pass yet
     alllength = len(onediv.extract())
 
     for alldiv in onediv.xpath('div'):
@@ -82,64 +85,70 @@ def GetSingleDiv(onediv):
         textlen = len(exttext)
     return alllength, textlen, exttext
 
+
 class SauroScriptSpider(scrapy.Spider):
     name = "SauroScript"
-    allowed_domains = ["stock.sohu.com"]
-#    start_urls = [ "http://stock.sohu.com/" ]
+    allowed_domains = [const.ALLOW]
+    start_urls = [const.HOST ]
 #    start_urls = [ "http://stock.sohu.com/stock_scrollnews_152.shtml" ]
 #    start_urls = [ "http://stock.sohu.com/20150914/n421098148.shtml" ]
-    start_urls = [ "http://stock.sohu.com/20150915/n421130868.shtml" ]
+#    start_urls = [ "http://stock.sohu.com/20150915/n421130868.shtml" ]
     mydict = {}
+    alltextdict = {}
 
     def __init__(self):
-        dispatcher.connect(self.finalize,signals.engine_stopped)
+        dispatcher.connect(self.finalize, signals.engine_stopped)
 
     def finalize(self):
         sortdict = sorted(self.mydict.items(), key=lambda d: len(d[1]), reverse=True)
-        for (k, v) in sortdict:
-            print k;
-            print len(v);
-            print v
-#        for (k, v) in self.mydict.items():
-#            print "dict[%s] =" % k, len(v)
+        for (urlmap, urllist) in sortdict:
+            try:
+                urldictlen = len(self.alltextdict[urlmap])
+            except KeyError:
+                urldictlen = 0
+            if urldictlen > 0:
+                print urlmap + '  ' + str(len(urllist))
+                for pdiv in self.alltextdict[urlmap]:
+                    print "Mydict[%s] =" % pdiv, self.alltextdict[urlmap][pdiv]
+                print '-' * 60
 
-    def parse(self, response):
-        textdict = {}
-        rate = 0.00
+    def parse_text(self, response):
+#        textdict = {}
+        returl = ReturnExpr(response.url)
+        try:
+            self.mydict[returl].append(response.url)
+        except KeyError:
+            self.mydict[returl] = []
+            self.mydict[returl].append(response.url)
+
         for onesign in response.xpath('//*[not(name()="script") and not(name()="style") and not(name()="a")]'):
             signlen = len(onesign.extract())
             for onetext in onesign.xpath('text()'):
                 textlen = len(onetext.extract().strip())
-                if textlen > const.TEXTLEN and textlen * 4 > signlen:
-                    fulldiv = onesign.xpath('parent::div')[0].extract()
-                    onlydiv = fulldiv[0:fulldiv.find('>')+1]
-                    print onlydiv
+                if textlen > const.TEXTLEN:
+                    onlydiv = 'NoDiv'
+                    for fulldiv in onesign.xpath('ancestor-or-self::div[1]').extract():
+                        onlydiv = fulldiv[0 : fulldiv.find('>')+1]
+
+                    try:
+                        self.alltextdict[returl][onlydiv] += 1
+                    except KeyError:
+                        try:
+                            self.alltextdict[returl][onlydiv] = 1
+                        except KeyError:
+                            self.alltextdict[returl] = {}
+                            self.alltextdict[returl][onlydiv] = 1
+#        self.alltextdict[returl] = textdict.copy()
+#        textdict.clear()
                     
-#                    for oneance in onesign.xpath('ancestor::div'):
-#                        alllength, textlen, alltext = GetSingleDiv(oneance)
-#                        print alllength, textlen, alltext
 
-
-                        
-
-
-    def parse_dict(self, response):
+    def parse(self, response):
         lx = SgmlLinkExtractor()
         urls = lx.extract_links(response)
         for oneurl in urls:
-            returl = ReturnExpr(oneurl.url)
+            yield scrapy.Request(oneurl.url, self.parse_text)
 
-            try:
-                self.mydict[returl].append(oneurl)
-#                self.mydict[returl] += 1
-            except KeyError:
-                self.mydict[returl] = []
-                self.mydict[returl].append(oneurl)
-#                self.mydict[returl] = 1
-#
-#            print self.mydict[returl];
-#            print oneurl.url + ' ' + oneurl.text.encode('utf-8')
-            
+
     def parse_href(self, response):
         hrefList = response.xpath('//a[starts-with(@onclick,"javascript:")]')
         for onehref in hrefList:
