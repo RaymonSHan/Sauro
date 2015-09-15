@@ -20,6 +20,7 @@ class const:
 const.JAVAFUNC = 'javafunc'
 const.HREFFUNC = 'hreffunc'
 const.FUNCHEAD = 'function main(splash) '
+const.TEXTLEN = 50
 
 def DefineStart():
     return const.FUNCHEAD
@@ -71,12 +72,23 @@ def ReturnExpr(responseurl):
             retstr += str(splen)
     return retstr
 
+def GetSingleDiv(onediv):
+    alllength = len(onediv.extract())
+
+    for alldiv in onediv.xpath('div'):
+        alllength -= len(alldiv.extract())
+    for alltext in onediv.xpath('text() | *[not(name()="div")]/descendant-or-self::text()'):
+        exttext = alltext.extract()
+        textlen = len(exttext)
+    return alllength, textlen, exttext
+
 class SauroScriptSpider(scrapy.Spider):
     name = "SauroScript"
     allowed_domains = ["stock.sohu.com"]
 #    start_urls = [ "http://stock.sohu.com/" ]
 #    start_urls = [ "http://stock.sohu.com/stock_scrollnews_152.shtml" ]
-    start_urls = [ "http://stock.sohu.com/20150914/n421098148.shtml" ]
+#    start_urls = [ "http://stock.sohu.com/20150914/n421098148.shtml" ]
+    start_urls = [ "http://stock.sohu.com/20150915/n421130868.shtml" ]
     mydict = {}
 
     def __init__(self):
@@ -92,15 +104,23 @@ class SauroScriptSpider(scrapy.Spider):
 #            print "dict[%s] =" % k, len(v)
 
     def parse(self, response):
-        for onesign in response.xpath('//*[not(name()="script") and not(name()="style")]/text()'):
+        textdict = {}
+        rate = 0.00
+        for onesign in response.xpath('//*[not(name()="script") and not(name()="style") and not(name()="a")]'):
             signlen = len(onesign.extract())
-            if signlen > 20:
-                print signlen;
-                print onesign.extract()
-#            signlen = len(onesign.xpath('text()').extract())
-#            if signlen > 10:
-#                print signlen;
-#                print onesign.xpath('text()')
+            for onetext in onesign.xpath('text()'):
+                textlen = len(onetext.extract().strip())
+                if textlen > const.TEXTLEN and textlen * 4 > signlen:
+                    fulldiv = onesign.xpath('parent::div')[0].extract()
+                    onlydiv = fulldiv[0:fulldiv.find('>')+1]
+                    print onlydiv
+                    
+#                    for oneance in onesign.xpath('ancestor::div'):
+#                        alllength, textlen, alltext = GetSingleDiv(oneance)
+#                        print alllength, textlen, alltext
+
+
+                        
 
 
     def parse_dict(self, response):
