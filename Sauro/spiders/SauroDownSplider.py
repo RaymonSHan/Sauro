@@ -15,7 +15,7 @@ from scrapy.xlib.pydispatch import dispatcher
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 
 
-from Sauro.items import SauroDownItem
+#from Sauro.items import SauroScriptItem
 
 class const: 
     class ConstError(TypeError):pass 
@@ -29,8 +29,8 @@ const.HREFFUNC = 'hreffunc'
 const.FUNCHEAD = 'function main(splash) '
 const.TEXTLEN = 100
 
-const.HOST = 'http://finance.ifeng.com/'
-const.ALLOW = 'finance.ifeng.com'
+const.HOST = 'http://stock.sohu.com/'
+const.ALLOW = 'stock.sohu.com'
 
 def DefineStart():
     return const.FUNCHEAD
@@ -82,6 +82,27 @@ def ReturnExpr(responseurl):
             retstr += str(splen)
     return retstr
 
+def ReturnStamp(response):
+    lastname = ''
+    lastnum = 0
+    totalname = 'M'
+    for onesign in response.xpath('//div[@*] | //table[@*] | //form[@*] | //script[@*] | //style[@*]').extract():
+        onlysign = onesign[0 : onesign.find('>')+1]
+        thisname = onesign[1:2]
+        if lastname == thisname:
+            lastnum += 1
+        else:
+            totalname += lastname
+            if lastnum != 0:
+                totalname += str(lastnum)
+                lastnum = 0
+            lastname = thisname
+    totalname += lastname
+    if lastnum != 0:
+        totalname += str(lastnum)
+    totalname += 'M'
+    return totalname
+
 def GetSingleDiv(onediv):          # not pass yet
     alllength = len(onediv.extract())
 
@@ -96,17 +117,19 @@ def GetSingleDiv(onediv):          # not pass yet
 class SauroScriptSpider(scrapy.Spider):
     name = "SauroScript"
     allowed_domains = [const.ALLOW]
-    start_urls = [const.HOST ]
+    start_urls = [const.HOST]
 #    start_urls = [ "http://stock.sohu.com/stock_scrollnews_152.shtml" ]
 #    start_urls = [ "http://stock.sohu.com/20150914/n421098148.shtml" ]
 #    start_urls = [ "http://stock.sohu.com/20150915/n421130868.shtml" ]
     mydict = {}
     alltextdict = {}
+    loopnum = 0
 
     def __init__(self):
         dispatcher.connect(self.finalize, signals.engine_stopped)
 
     def finalize(self):
+        print self.loopnum
         sortdict = sorted(self.alltextdict.items(), key=lambda d: d[1]['TOTAL'], reverse=True)
         for (pdiv, urlmap) in sortdict:
             print pdiv, urlmap['TOTAL']
@@ -132,8 +155,10 @@ class SauroScriptSpider(scrapy.Spider):
                     print "Mydict[%s] =" % pdiv, self.alltextdict[urlmap][pdiv]
                 print '-' * 60
 
+
     def parse_text(self, response):
-        returl = ReturnExpr(response.url)
+#        returl = ReturnExpr(response.url)
+        returl = ReturnStamp(response)
         try:
             self.mydict[returl].append(response.url)
         except KeyError:
@@ -167,9 +192,9 @@ class SauroScriptSpider(scrapy.Spider):
                             self.alltextdict[onlydiv] = {}
                             self.alltextdict[onlydiv][returl] = 1
                             self.alltextdict[onlydiv]['TOTAL'] = 1
-                    
 
-    def parse(self, response):
+
+    def parse(self, response):    # changed to parse to crawl all home page
         lx = SgmlLinkExtractor()
         urls = lx.extract_links(response)
         for oneurl in urls:

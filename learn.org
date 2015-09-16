@@ -243,6 +243,29 @@ to run : scrapy crawl Sauro
 ** try splash
 run splash : sudo docker run -p 8050:8050 scrapinghub/splash
 
+** XML format for output -- Sep. 16 '15
+<Sauro Version=1.0 Date=2015-09-16>
+  <SauroSite start_url="stock.sohu.com" allow_domain="stock.sohu.com">
+    <SauroPage url="stock.sohu.com/onepage.html" title="some title" level=1>    # This is Scrapy.Item, level for crawl deep
+      <SauroRefer from="stock.sohu.com" method="javascript:go(next_page)" />
+      <SauroStamp signlist="Daaabbb" urlmap="S5-xx" />
+      <SauroText mark="base64 of <div class='xx'>" value=3>
+        <SauroFragment>
+          base64 of content in it
+        </SauroFragment>
+      </SauroText>
+      <SauroText mark="base64 of <div class='yy'>" value=1>
+        <SauroFragment>
+          base64 of content in it
+        </SauroFragment>
+      </SauroText>
+      <SauroLinks value=10>   # link to text page
+        <SauroLink href="link" /> ...
+      </SauroLinks>
+    </SauroPage>
+  </SauroSite>
+</Sauro>
+
 
 * TODO LEARN
 Lua: http://www.lua.org/pil/contents.html
@@ -376,3 +399,85 @@ const.ALLOW = 'finance.ifeng.com'
 
 
 sse.com.cn NOT GOOD
+
+
+        for onesign in response.xpath('//div[@*] | //table[@*] | //form[@*] | //script[@*] | //style[@*]').extract():
+            thisname = onesign[1:2]
+            if lastname == thisname:
+                lastnum += 1
+            else:
+                if lastnum != 0:
+                    totalname += lastname
+                    totalname += str(lastnum)
+                    lastnum = 0
+                lastname = thisname
+        print totalname
+s6d3s4d1d12d1d46d149d53d8d8d20d8d8d7d9d8d8d8d12d8d11d3d17d6d1d1d3d1d1d4d3s1d69d15d46s3d5
+
+0s6d0s0d3s4d1s0d12f0d0s0d1s0d46s0d149s0d53t0d0t0d8t0d8t0d20t0d8t0d8t0d7s0d9t0d8t0d8t0d8t0d12t0d8t0d11s0d3f0d17t0d0t0d6t0d1t0d1t0d3t0d1t0d1t0d4t0s0d3s1d69s0d15t0d46s3d5
+
+
+Ms9ds1ds3d2tds1d1s1d12   s2d7sd2td9  s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  d7sd61      tdsd18sdsd4s3d2s12ds 8
+Ms9ds1ds3d2tds1d1s1d12   s2d7sd2td5  s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  d7sd61      tdsd18sdsd4s3d2s12ds 17
+Ms9ds1ds3d2tds1d1s1d13   sd18        s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  ds1d10s1d2  tdsd18sdsd4s3d2s12ds 4
+Ms9ds1ds3d2tds1d1s1d13   sd18        s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  d7sd61      tdsd18sdsd4s3d2s12ds 24
+Ms9ds1ds3d2tds1d1s1d13   sd15        s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  d7sd61      tdsd18sdsd4s3d2s12ds 10
+Ms9ds1ds3d2tds1d1s1d13   sd8sd4      s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  d7sd61      tdsd18sdsd4s3d2s12ds 2
+Ms9ds1ds3d2tds1d1s1d13   sd13        s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  ds1d10s1d2  tdsd18sdsd4s3d2s12ds 32
+Ms9ds1ds3d2tds1d1s1d13   sd9td4      s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  d7sd61      tdsd18sdsd4s3d2s12ds 20
+Ms9ds1ds3d2tds1d1s1d13   sd14        s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  ds1d10s1d2  tdsd18sdsd4s3d2s12ds 13
+Ms9ds1ds3d2tds1d1s1d13   sd10sd4     s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  d7sd61      tdsd18sdsd4s3d2s12ds 8
+Ms9ds1ds3d2tds1d1s1d13   sd10td4     s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  d7sd61      tdsd18sdsd4s3d2s12ds 8
+Ms8ds1ds3d2tds1d1s1d13   sd9tdtd5    s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  ds1d10s1d2  tdsd18sdsd4s3d2s12ds 9
+Ms9ds1ds3d2tds1d1s1d13   sd9td6      s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  d7sd61     z tdsd18sdsd4s3d2s12ds 4
+Ms9ds1ds3d2tds1d1s1d13   sd15        s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  ds1d10s1d2  tdsd18sdsd4s3d2s12ds 11
+Ms9ds1ds3d2tds1d1s1d13   sd17        s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  ds1d10s1d2  tdsd18sdsd4s3d2s12ds 69
+Ms9ds1ds3d2tds1d1s1d13   sd12sd4     s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2s  ds1d10s1d2  tdsd18sdsd4s3d2s12ds 7
+Ms9ds1ds3d2tds1d1s1d13   sd17        s2d1sd1s10ds2d9s1d2fds1dtds2d2tds1d2sds1d10s1d2  tdsd18sdsd4s3d2s12ds 6
+Ms9ds1ds3d2tds1d1s1d13   sd13        s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61  tdsd18sdsd4s3d2s12ds 9
+
+<div itemprop="articleBody"> 261
+Ms9ds1ds3d2tds1d1s1d12s2d7sd2td9s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds 8
+Ms9ds1ds3d2tds1d1s1d12s2d7sd2td5s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds 17
+Ms9ds1ds3d2tds1d1s1d13sd18s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds 4
+Ms9ds1ds3d2tds1d1s1d13sd18s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds 24
+Ms9ds1ds3d2tds1d1s1d13sd15s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds 10
+Ms9ds1ds3d2tds1d1s1d13sd8sd4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds 2
+Ms9ds1ds3d2tds1d1s1d13sd13s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds 32
+Ms9ds1ds3d2tds1d1s1d13sd9td4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds 20
+Ms9ds1ds3d2tds1d1s1d13sd14s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds 13
+Ms9ds1ds3d2tds1d1s1d13sd10sd4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds 8
+Ms9ds1ds3d2tds1d1s1d13sd10td4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds 8
+Ms8ds1ds3d2tds1d1s1d13sd9tdtd5s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds 9
+Ms9ds1ds3d2tds1d1s1d13sd9td6s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds 4
+Ms9ds1ds3d2tds1d1s1d13sd15s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds 11
+Ms9ds1ds3d2tds1d1s1d13sd17s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds 69
+Ms9ds1ds3d2tds1d1s1d13sd12sd4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds 7
+Ms9ds1ds3d2tds1d1s1d13sd17s2d1sd1s10ds2d9s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds 6
+Ms9ds1ds3d2tds1d1s1d13sd13s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds 9
+<div class="lefttext"> 61
+Ms1d2fd8tdtd2tdtd2tdtd5tdtdtd7t1d2td3td18sd2td14t2d4td10td1td19sd2td19td2td2td1t1sd3tdtd1s7 27
+Ms1d2fd8tdtd2tdtd2tdtd5tdtdtd7t1d2td22sd2td14t2d4td10td1td19sd2td19td2td2td1t1sd3tdtd1s7 2
+Ms1d2fd8tdtd2tdtd2tdtd5tdtdtd7t1d2td3td18sd2td14t2d4td10td1td19sd2td19td2td6tdtsd3tdtd1s7 27
+Ms1d2fd8tdtd2tdtd2tdtd5tdtdtd7t1d2td3td18sd2td14t2d4td10td1td19sd2td19td2td6tdtsd4s7 3
+Ms1d2fd8tdtd2tdtd2tdtd5tdtdtd7t1d2td3td18sd2td14t2d4td10td1td19sd2td19td2td2td1t1sd4s7 2
+<div class="text clear" id="contentText"> 26
+Ms6ds1ds3d2tds1d1s1d22s4ds3ds2d7s1d2fds1dtds2d28tds1d2sd5sd20sd61tdsd18sdsd4s5d2s12ds 26
+<div class="leftcon"> 19
+Ms1d32sd86sdsds3 5
+Ms2d14tdtd23s1d91sdsds3 14
+<div align="left"> 11
+Ms9ds1ds3d2tds1d1s1d13sd36s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds 11
+<div class="txt"> 8
+Ms5d19s2d8sd23sd1s2d3s1dsd5sds4d4s1d3sds1ds4ds 2
+Ms5d19s2d8sd21sds2d3s1dsd5sds4d4s1d3sds1ds4ds 6
+<div class="righttext"> 2
+Ms4d1sd11sd1sd4sd8sd1s3 1
+Ms3d1sd11sd1sd4sd8sd1s3 1
+<div class="text-pic"> 1
+Ms9ds1ds3d2tds1d1s1d13sd10td4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds 1
+<div class="commtext"> 1
+Msd36sds3 1
+<div class="con-l1"> 1
+Ms3d10s2d17sd3s3 1
+raymon@ubuntu:~/security/Sauro$ 
