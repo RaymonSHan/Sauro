@@ -332,3 +332,47 @@ def parse_type(self,response, typeid):
 
 i need 'include1 include2 include3 include4'
 the most crazy is how to include1 & 5
+
+
+
+* TEST RESULT
+
+const.HOST = 'http://stock.sohu.com/'
+const.ALLOW = 'stock.sohu.com
+<div itemprop="articleBody"> 256
+
+const.HOST = 'http://finance.sina.com.cn/stock/'
+const.ALLOW = 'finance.sina.com.cn'
+<div class="article article_16" id="artibody"> 880
+
+const.HOST = 'http://www.stockstar.com/'
+const.ALLOW = 'stock.stockstar.com'
+<div class="article" id="container-article"> 359
+
+const.HOST = 'http://www.sac.net.cn/'
+const.ALLOW = 'www.sac.net.cn'
+<div class="Custom_UnionStyle"> 48    
+
+const.HOST = 'http://www.szse.cn/'
+const.ALLOW = 'szse.cn
+<div class="news_zw"> 16
+
+const.HOST = 'http://money.163.com/stock/'
+const.ALLOW = 'money.163.com
+<div id="endText" class="end-text"> 949
+
+const.HOST = 'http://finance.people.com.cn/'
+const.ALLOW = 'finance.people.com.cn'
+<div id="p_content" class="clearfix"> 476
+
+const.HOST = 'http://caijing.chinadaily.com.cn/'
+const.ALLOW = 'caijing.chinadaily.com.cn'
+<div class="arcBox" id="Zoom"> 303
+
+const.HOST = 'http://finance.ifeng.com/'
+const.ALLOW = 'finance.ifeng.com'
+<div id="main_content" class="js_selection_area"> 763
+
+
+
+sse.com.cn NOT GOOD

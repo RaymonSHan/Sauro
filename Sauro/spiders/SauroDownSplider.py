@@ -3,6 +3,13 @@ import json
 import string
 
 
+###
+# http://edu.sse.com.cn/eduact/inact/popup_index.shtml?includPage=/eduact/edu/c/68007.html
+#
+# $(document).ready(function(){
+###
+
+
 from scrapy import signals
 from scrapy.xlib.pydispatch import dispatcher
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
@@ -22,8 +29,8 @@ const.HREFFUNC = 'hreffunc'
 const.FUNCHEAD = 'function main(splash) '
 const.TEXTLEN = 100
 
-const.HOST = 'http://finance.sina.com.cn/stock/'
-const.ALLOW = 'finance.sina.com.cn'
+const.HOST = 'http://finance.ifeng.com/'
+const.ALLOW = 'finance.ifeng.com'
 
 def DefineStart():
     return const.FUNCHEAD
@@ -100,6 +107,19 @@ class SauroScriptSpider(scrapy.Spider):
         dispatcher.connect(self.finalize, signals.engine_stopped)
 
     def finalize(self):
+        sortdict = sorted(self.alltextdict.items(), key=lambda d: d[1]['TOTAL'], reverse=True)
+        for (pdiv, urlmap) in sortdict:
+            print pdiv, urlmap['TOTAL']
+            for onemap in urlmap:
+                if onemap != 'TOTAL':
+                    print onemap, urlmap[onemap]
+
+    def finalize_notuse_2(self):
+        for pdiv in self.alltextdict:
+            for urlmap in self.alltextdict[pdiv]:
+                print pdiv, urlmap, self.alltextdict[pdiv][urlmap]
+    
+    def finalize_notuse_1(self):
         sortdict = sorted(self.mydict.items(), key=lambda d: len(d[1]), reverse=True)
         for (urlmap, urllist) in sortdict:
             try:
@@ -113,7 +133,6 @@ class SauroScriptSpider(scrapy.Spider):
                 print '-' * 60
 
     def parse_text(self, response):
-#        textdict = {}
         returl = ReturnExpr(response.url)
         try:
             self.mydict[returl].append(response.url)
@@ -122,6 +141,13 @@ class SauroScriptSpider(scrapy.Spider):
             self.mydict[returl].append(response.url)
 
         for onesign in response.xpath('//*[not(name()="script") and not(name()="style") and not(name()="a")]'):
+            shouldnotuse = False
+
+            for nonedisplay in onesign.xpath('ancestor-or-self::*[@style="display:none"]'):
+                shouldnotuse = True
+                break
+            if shouldnotuse:
+                continue
             signlen = len(onesign.extract())
             for onetext in onesign.xpath('text()'):
                 textlen = len(onetext.extract().strip())
@@ -131,15 +157,16 @@ class SauroScriptSpider(scrapy.Spider):
                         onlydiv = fulldiv[0 : fulldiv.find('>')+1]
 
                     try:
-                        self.alltextdict[returl][onlydiv] += 1
+                        self.alltextdict[onlydiv][returl] += 1
+                        self.alltextdict[onlydiv]['TOTAL'] += 1
                     except KeyError:
                         try:
-                            self.alltextdict[returl][onlydiv] = 1
+                            self.alltextdict[onlydiv][returl] = 1
+                            self.alltextdict[onlydiv]['TOTAL'] += 1
                         except KeyError:
-                            self.alltextdict[returl] = {}
-                            self.alltextdict[returl][onlydiv] = 1
-#        self.alltextdict[returl] = textdict.copy()
-#        textdict.clear()
+                            self.alltextdict[onlydiv] = {}
+                            self.alltextdict[onlydiv][returl] = 1
+                            self.alltextdict[onlydiv]['TOTAL'] = 1
                     
 
     def parse(self, response):
