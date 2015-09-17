@@ -27,7 +27,7 @@ class const:
 const.JAVAFUNC = 'javafunc'
 const.HREFFUNC = 'hreffunc'
 const.FUNCHEAD = 'function main(splash) '
-const.TEXTLEN = 100
+const.TEXTLEN = 180
 const.MINSTAMP = 6
 
 const.HOST = 'http://stock.sohu.com/'
