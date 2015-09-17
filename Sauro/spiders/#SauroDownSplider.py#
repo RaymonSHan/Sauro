@@ -157,6 +157,7 @@ def ReturnStampKey(strlist, otherlist):
                 checknohit = 1
                 break
             else:
+                print '
                 pass
         if checknohit == 1:
             if havechecked == 1:
@@ -188,7 +189,7 @@ class SauroScriptSpider(scrapy.Spider):
 
     def parse(self, response):
         strlist = sttry.split()
-        print ReturnStampKey(sttry, None)
+        print ReturnStampKey(strlist, None)
 
 
 
