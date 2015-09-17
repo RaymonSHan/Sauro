@@ -115,11 +115,6 @@ def GetSingleDiv(onediv):          # not pass yet
     return alllength, textlen, exttext
 
 sttry = """
-1234567890
-1234567699
-"""
-
-stampstring = """
 Ms9ds1ds3d2tds1d1s1d13sd18s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12dsM 
 Ms9ds1ds3d2tds1d1s1d13sd22s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM 
 Ms9ds1ds3d2tds1d1s1d13sd15s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12dsM 
@@ -142,23 +137,24 @@ Ms9ds1ds3d2tds1d1s1d13sd16s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18
 
 def ReturnStampKey(strlist, otherlist):
     firststr = strlist[0]
-    print strlist
     returnlist = []
     beginpos = 0
     endpos = const.MINSTAMP
     lastpos = len(firststr)
-    while endpos <= lastpos:
-        checkstr = firststr[beginpos:endpos]
-        checkhit = 0
-        checknothit = 0
-        havechecked = 0
-        for descstr in strlist:
-            if descstr.find(checkstr) == -1:
-                checknohit = 1
-                break
-            else:
-                pass
-        if checknohit == 1:
+    havechecked = 0     
+    while endpos <= lastpos + 1:
+        if endpos > lastpos:                        # for add last match
+            checknothit = 1
+        else:
+            checkstr = firststr[beginpos:endpos]
+            print 'checkstr in mainloop =', checkstr
+            checkhit = 0
+            checknothit = 0
+            for descstr in strlist:
+                if descstr.find(checkstr) == -1:
+                    checknothit = 1
+                    break
+        if checknothit == 1:
             if havechecked == 1:
                 returnlist.append(firststr[beginpos:endpos-1])
                 beginpos = endpos
@@ -168,6 +164,7 @@ def ReturnStampKey(strlist, otherlist):
                 beginpos += 1
                 endpos += 1
         else:
+            havechecked = 1
             endpos += 1
     return returnlist
                 
@@ -188,7 +185,7 @@ class SauroScriptSpider(scrapy.Spider):
 
     def parse(self, response):
         strlist = sttry.split()
-        print ReturnStampKey(sttry, None)
+        print ReturnStampKey(strlist, None)
 
 
 
