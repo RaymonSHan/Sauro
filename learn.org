@@ -481,3 +481,7 @@ Msd36sds3 1
 <div class="con-l1"> 1
 Ms3d10s2d17sd3s3 1
 raymon@ubuntu:~/security/Sauro$ 
+
+
+java callback
+http://blog.csdn.net/allen_zhao_2012/article/details/8056665

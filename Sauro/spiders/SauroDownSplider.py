@@ -1,7 +1,9 @@
 import scrapy
 import json
 import string
+import hashlib   
 
+import os, errno
 
 ###
 # http://edu.sse.com.cn/eduact/inact/popup_index.shtml?includPage=/eduact/edu/c/68007.html
@@ -29,6 +31,8 @@ const.HREFFUNC = 'hreffunc'
 const.FUNCHEAD = 'function main(splash) '
 const.TEXTLEN = 180
 const.MINSTAMP = 6
+const.MAX_CRAWL_LEVEL = 4
+const.PAGE_HOME = '/home/raymon/security/pages/'
 
 const.HOST = 'http://stock.sohu.com/'
 const.ALLOW = 'stock.sohu.com'
@@ -104,7 +108,7 @@ def ReturnStamp(response):
     totalname += 'M'
     return totalname
 
-def GetSingleDiv(onediv):          # not pass yet
+def GetSingleDiv(onediv):           # not pass yet
     alllength = len(onediv.extract())
 
     for alldiv in onediv.xpath('div'):
@@ -113,6 +117,38 @@ def GetSingleDiv(onediv):          # not pass yet
         exttext = alltext.extract()
         textlen = len(exttext)
     return alllength, textlen, exttext
+
+def OpenPathFile(filename, retry=0, rw='wb'):        # create dirs and file
+    if retry >= 2:
+        return False
+    try:
+        opfile = open(filename, rw)
+    except IOError as exc:
+        if exc.errno == errno.ENOENT:       # 2 : No such file or directory
+            try:
+                os.makedirs(os.path.split(filename)[0])
+            except OSError:
+                return False
+            return OpenPathFile(filename, retry+1, rw)
+    return opfile
+        
+def OpenMD5File(urlname, rw='wb'):
+    md5val = hashlib.md5()   
+    md5val.update(urlname)   
+    filename = md5val.hexdigest()   
+    return OpenPathFile(const.PAGE_HOME + filename[0:2]+'/'+filename[2:4]+'/'+filename, 0, rw)
+    
+def SaveResponse(response):
+    returnval = True
+    savefile = OpenMD5File(response.url)
+    if savefile == False:
+        return False
+    try:
+        savefile.write(response.body)
+    except:
+        returnval = False
+    savefile.close()
+    return returnval
 
 sttry = """
 Ms9ds1ds3d2tds1d1s1d13sd18s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12dsM 
@@ -167,12 +203,9 @@ def ReturnStampKey(strlist, otherlist):
             havechecked = 1
             endpos += 1
     return returnlist
-                
-      
-                
 
 class SauroScriptSpider(scrapy.Spider):
-    name = 'SauroScript'
+    name = 'SauroSite'
     allowed_domains = [const.ALLOW]
     start_urls = [const.HOST]
     #start_urls = ["http://stock.sohu.com/stock_scrollnews_152.shtml"]
@@ -182,28 +215,24 @@ class SauroScriptSpider(scrapy.Spider):
     mydict = {}
     alltextdict = {}
     loopnum = 0
-
-    def parse(self, response):
+        
+    def parse_stampkey(self, response):
         strlist = sttry.split()
         print ReturnStampKey(strlist, None)
-
-
 
     def __init__(self):
         dispatcher.connect(self.finalize, signals.engine_stopped)
 
     def finalize(self):
-        print self.loopnum
         sortdict = sorted(self.alltextdict.items(), key=lambda d: d[1]['TOTAL'], reverse=True)
         for (pdiv, urlmap) in sortdict:
             print pdiv, urlmap['TOTAL']
             for onemap in urlmap:
                 if onemap != 'TOTAL':
-                    print onemap, urlmap[onemap]
+                    print onemap, urlmap[onemap], len(self.mydict[onemap])
         sorturl = sorted(self.mydict.items(), key=lambda d: len(d[1]), reverse=True)
         for (purl, urls) in sorturl:
-            print purl, len(urls)
-
+            print purl, urls[0]
 
     def finalize_notuse_2(self):
         for pdiv in self.alltextdict:
@@ -223,9 +252,8 @@ class SauroScriptSpider(scrapy.Spider):
                     print "Mydict[%s] =" % pdiv, self.alltextdict[urlmap][pdiv]
                 print '-' * 60
 
-
-    def parse_text(self, response):
-#        returl = ReturnExpr(response.url)
+    def parse_text(self, response, crawllevel):
+        SaveResponse(response)
         returl = ReturnStamp(response)
         try:
             self.mydict[returl].append(response.url)
@@ -248,7 +276,6 @@ class SauroScriptSpider(scrapy.Spider):
                     onlydiv = 'NoDiv'
                     for fulldiv in onesign.xpath('ancestor-or-self::div[1]').extract():
                         onlydiv = fulldiv[0 : fulldiv.find('>')+1]
-
                     try:
                         self.alltextdict[onlydiv][returl] += 1
                         self.alltextdict[onlydiv]['TOTAL'] += 1
@@ -260,14 +287,21 @@ class SauroScriptSpider(scrapy.Spider):
                             self.alltextdict[onlydiv] = {}
                             self.alltextdict[onlydiv][returl] = 1
                             self.alltextdict[onlydiv]['TOTAL'] = 1
+        if crawllevel < const.MAX_CRAWL_LEVEL:
+            lx = SgmlLinkExtractor()
+            urls = lx.extract_links(response)
+            for oneurl in urls:
+                yield scrapy.Request(oneurl.url, callback=lambda response, crawllevel=1: self.parse_text(response, crawllevel + 1))
 
+    def parse(self, response):
+        
 
     def parse_site(self, response):    # changed to parse to crawl all home page
+        crawllevel = 0
         lx = SgmlLinkExtractor()
         urls = lx.extract_links(response)
         for oneurl in urls:
-            yield scrapy.Request(oneurl.url, self.parse_text)
-
+            yield scrapy.Request(oneurl.url, callback=lambda response, crawllevel=1: self.parse_text(response, crawllevel + 1))
 
     def parse_href(self, response):
         hrefList = response.xpath('//a[starts-with(@onclick,"javascript:")]')
@@ -288,13 +322,10 @@ class SauroScriptSpider(scrapy.Spider):
 
                 yield scrapy.Request(response.url, self.parse_script, meta=DefineMeta(onefunc))
 
-
     def parse_script(self, response):
         jsonresponse = json.loads(response.body_as_unicode())
         scripturl = response.urljoin(jsonresponse['getreturn'])
         yield scrapy.Request(scripturl, self.parse)
-
-
 
 class SauroDownSpider(scrapy.Spider):
     name = "SauroDown"
@@ -421,7 +452,6 @@ class SauroDownSpider(scrapy.Spider):
         article = article.replace('<p>', '')
         article = article.replace('</p>', '')
 
-
 class MySpider(scrapy.Spider):
     name = "MySpider"
     allowed_domains = ["stock.sohu.com"]
@@ -430,13 +460,10 @@ class MySpider(scrapy.Spider):
     def parse(self, response):
         signList = response.xpath('/html/body//div')
         for onesign in signList:
-
             try:
                 item['price'] = site.xpath('ul/li/div/a/span/text()').extract()[0]
             except IndexError:
                 item['price'] = site.xpath('ul/li/a/span/text()').extract()[0]
-
-
 
             print string('onesign.xpath("@id")')[0].extract();
             print onesign.xpath('@class')[0].extract()
