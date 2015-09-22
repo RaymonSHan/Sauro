@@ -33,7 +33,7 @@ const.HREFFUNC = 'hreffunc'
 const.FUNCHEAD = 'function main(splash) '
 const.TEXTLEN = 180
 const.MINSTAMP = 6
-const.MAX_CRAWL_LEVEL = 2
+const.MAX_CRAWL_LEVEL = 1
 const.PAGE_HOME = '/home/raymon/security/pages/'
 const.FILE_HOME = '/home/raymon/security/pages/00/'
 const.LOG_FILE = '/home/raymon/security/Saurolog'
@@ -264,11 +264,11 @@ class SauroScriptSpider(scrapy.Spider):
                         self.alltextdict[onlydiv]['TOTAL'] = divnum
 
     def initialize(self):
-        self.logfile = open(const.LOG_FILE, 'rb')
-        #self.logfile.write('{\"totalresult\":[\n')
+        self.logfile = open(const.LOG_FILE, 'wb')
+        self.logfile.write('{\"totalresult\":[\n')
  
     def finalize(self):
-        #self.logfile.write('{"url":"", "stamp":"", "textdiv":[]}]}')
+        self.logfile.write('{"url":"", "stamp":"", "textdiv":[]}]}')
         self.logfile.close()
  
     def parse(self, response):
@@ -317,20 +317,26 @@ class SauroScriptSpider(scrapy.Spider):
                     print "Mydict[%s] =" % pdiv, self.alltextdict[urlmap][pdiv]
                 print '-' * 60
 
-    def parse_text(self, response, crawllevel):
-        SaveResponse(response)
+    def parse_text(self, response, crawllevel, order, loopstr):
+        #SaveResponse(response)
+        nowlevel = crawllevel + 1
+        nowloopstr = loopstr + str(crawllevel) + ' ' + str(order) + ':   ' 
+        print nowloopstr
         returl = ReturnStamp(response)
         textdict = ReturnTextDiv(response)
         result = {"url":response.url, "stamp":returl, "textdiv":textdict}
         self.logfile.write(json.dumps(result))
         self.logfile.write(',\n')
 
-        if crawllevel < const.MAX_CRAWL_LEVEL:
+        if crawllevel <= const.MAX_CRAWL_LEVEL:
             lx = SgmlLinkExtractor()
             urls = lx.extract_links(response)
+            noworder = 0
             for oneurl in urls:
-                yield scrapy.Request(oneurl.url, callback=lambda response, crawllevel=1: self.parse_text(response, crawllevel + 1))
-
+                noworder += 1
+                yield scrapy.Request(oneurl.url, callback=lambda response, crawllevel=nowlevel, order=noworder, loopstr=nowloopstr: self.parse_text(response, crawllevel, order, loopstr))
+                # in lambda is val para, in call() is ref para, VERY IMPORTANT !!!
+                
     def parse_testfile(self, response):
         lx = SgmlLinkExtractor()
         urls = lx.extract_links(response)
@@ -345,13 +351,13 @@ class SauroScriptSpider(scrapy.Spider):
                 handle.close()
         print readed, notreaded
 
-
-    def parse_site(self, response):    # changed to parse to crawl all home page
-        crawllevel = 0
+    def parse(self, response):    # changed to parse to crawl all home page
         lx = SgmlLinkExtractor()
         urls = lx.extract_links(response)
+        noworder = 0
         for oneurl in urls:
-            yield scrapy.Request(oneurl.url, callback=lambda response, crawllevel=1: self.parse_text(response, crawllevel + 1))
+            noworder += 1
+            yield scrapy.Request(oneurl.url, callback=lambda response, crawllevel=1, order=noworder, loopstr='': self.parse_text(response, crawllevel, order, loopstr))
 
     def parse_href(self, response):
         hrefList = response.xpath('//a[starts-with(@onclick,"javascript:")]')
