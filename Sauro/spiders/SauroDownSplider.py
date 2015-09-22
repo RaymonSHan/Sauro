@@ -1,9 +1,10 @@
 import scrapy
 import json
 import string
-import hashlib   
-
-import os, errno
+import os                                   # for findfile & error in open
+import hashlib                              # for md5
+import fnmatch                              # for findfile
+import errno                                # for error in open
 
 ###
 # http://edu.sse.com.cn/eduact/inact/popup_index.shtml?includPage=/eduact/edu/c/68007.html
@@ -15,7 +16,8 @@ import os, errno
 from scrapy import signals
 from scrapy.xlib.pydispatch import dispatcher
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
-
+from scrapy.selector import Selector
+from scrapy.http import HtmlResponse
 
 #from Sauro.items import SauroScriptItem
 
@@ -31,8 +33,10 @@ const.HREFFUNC = 'hreffunc'
 const.FUNCHEAD = 'function main(splash) '
 const.TEXTLEN = 180
 const.MINSTAMP = 6
-const.MAX_CRAWL_LEVEL = 4
+const.MAX_CRAWL_LEVEL = 2
 const.PAGE_HOME = '/home/raymon/security/pages/'
+const.FILE_HOME = '/home/raymon/security/pages/00/'
+const.LOG_FILE = '/home/raymon/security/Saurolog'
 
 const.HOST = 'http://stock.sohu.com/'
 const.ALLOW = 'stock.sohu.com'
@@ -108,6 +112,26 @@ def ReturnStamp(response):
     totalname += 'M'
     return totalname
 
+def ReturnTextDiv(response):
+    textdict = []
+    for onesign in response.xpath('//*[not(name()="script") and not(name()="style") and not(name()="a")]'):
+        shouldnotuse = False
+
+        for nonedisplay in onesign.xpath('ancestor-or-self::*[@style="display:none"]'):
+            shouldnotuse = True
+            break
+        if shouldnotuse:
+            continue
+        signlen = len(onesign.extract())
+        for onetext in onesign.xpath('text()'):
+            textlen = len(onetext.extract().strip())
+            if textlen > const.TEXTLEN:
+                onlydiv = 'NoDiv'
+                for fulldiv in onesign.xpath('ancestor-or-self::div[1]').extract():
+                    onlydiv = fulldiv[0 : fulldiv.find('>')+1]
+                textdict.append(onlydiv)
+    return textdict
+
 def GetSingleDiv(onediv):           # not pass yet
     alllength = len(onediv.extract())
 
@@ -144,32 +168,18 @@ def SaveResponse(response):
     if savefile == False:
         return False
     try:
+        savefile.write(response.url)
+        savefile.write('\n\n')
         savefile.write(response.body)
     except:
         returnval = False
     savefile.close()
     return returnval
 
-sttry = """
-Ms9ds1ds3d2tds1d1s1d13sd18s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d13sd22s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d13sd15s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d13sd9td6s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d13sd17s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d13sd9td4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d13sd13s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d13sd10td4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d13sd17s2d1sd1s10ds2d9s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d13sd8sd4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d13sd19s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d13sd10sd4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d13sd13s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d12s2d7sd2td9s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d13sd18s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d12s2d7sd2td5s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12dsM 
-Ms8ds1ds3d2tds1d1s1d13sd9tdtd5s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM 
-Ms9ds1ds3d2tds1d1s1d13sd16s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM 
-"""
+def iterfindfiles(path, fnexp):
+    for root, dirs, files in os.walk(path):
+        for filename in fnmatch.filter(files, fnexp):
+            yield os.path.join(root, filename)
 
 def ReturnStampKey(strlist, otherlist):
     firststr = strlist[0]
@@ -214,25 +224,80 @@ class SauroScriptSpider(scrapy.Spider):
 
     mydict = {}
     alltextdict = {}
-    loopnum = 0
+    loghandle = None
         
-    def parse_stampkey(self, response):
-        strlist = sttry.split()
-        print ReturnStampKey(strlist, None)
+    #def parse_stampkey(self, response):
+    #    strlist = sttry.split()
+    #    print ReturnStampKey(strlist, None)
 
     def __init__(self):
+        dispatcher.connect(self.initialize, signals.engine_started)
         dispatcher.connect(self.finalize, signals.engine_stopped)
 
+    def parse_readfile(self, response):
+        for pathfilename in iterfindfiles(const.FILE_HOME, '*'):
+            #filesize = os.path.getsize(pathfilename)
+            handle = open(pathfilename, 'rb')
+            sel = Selector(text=handle.read(), type="html")
+            handle.close()
+            filename = os.path.split(pathfilename)[1]
+            returl = ReturnStamp(sel)
+            try:
+                self.mydict[returl].append(filename)
+            except KeyError:
+                self.mydict[returl] = []
+                self.mydict[returl].append(filename)
+                
+            textdict = ReturnTextDiv(sel)
+            for onlydiv in textdict:
+                divnum = textdict[onlydiv]
+                try:
+                    self.alltextdict[onlydiv][returl] += divnum
+                    self.alltextdict[onlydiv]['TOTAL'] += divnum
+                except KeyError:
+                    try:
+                        self.alltextdict[onlydiv][returl] = divnum
+                        self.alltextdict[onlydiv]['TOTAL'] += divnum
+                    except KeyError:
+                        self.alltextdict[onlydiv] = {}
+                        self.alltextdict[onlydiv][returl] = divnum
+                        self.alltextdict[onlydiv]['TOTAL'] = divnum
+
+    def initialize(self):
+        self.logfile = open(const.LOG_FILE, 'rb')
+        #self.logfile.write('{\"totalresult\":[\n')
+ 
     def finalize(self):
+        #self.logfile.write('{"url":"", "stamp":"", "textdiv":[]}]}')
+        self.logfile.close()
+ 
+    def parse(self, response):
+        jsoncontent = json.loads(self.logfile.read())
+        print jsoncontent["totalresult"]
+        
+    def finalize_notuse_3(self):
+        handle = open(const.LOG_FILE, 'wb')
         sortdict = sorted(self.alltextdict.items(), key=lambda d: d[1]['TOTAL'], reverse=True)
         for (pdiv, urlmap) in sortdict:
-            print pdiv, urlmap['TOTAL']
+            handle.write(pdiv)
+            handle.write(' ')
+            handle.write(str(urlmap['TOTAL']))
+            handle.write('\n')
             for onemap in urlmap:
                 if onemap != 'TOTAL':
-                    print onemap, urlmap[onemap], len(self.mydict[onemap])
-        sorturl = sorted(self.mydict.items(), key=lambda d: len(d[1]), reverse=True)
-        for (purl, urls) in sorturl:
-            print purl, urls[0]
+                    handle.write(onemap)
+                    handle.write(' ')
+                    handle.write(str(urlmap[onemap]))
+                    handle.write(' ')
+                    handle.write(str(len(self.mydict[onemap])))
+                    handle.write(' ')
+                    handle.write(self.mydict[onemap][0])
+                    handle.write('\n')
+                    #print onemap, urlmap[onemap], len(self.mydict[onemap]), self.mydict[onemap][0]
+        #sorturl = sorted(self.mydict.items(), key=lambda d: len(d[1]), reverse=True)
+        #for (purl, urls) in sorturl:
+        #    print purl, urls[0]
+        #handle.close()
 
     def finalize_notuse_2(self):
         for pdiv in self.alltextdict:
@@ -255,46 +320,31 @@ class SauroScriptSpider(scrapy.Spider):
     def parse_text(self, response, crawllevel):
         SaveResponse(response)
         returl = ReturnStamp(response)
-        try:
-            self.mydict[returl].append(response.url)
-        except KeyError:
-            self.mydict[returl] = []
-            self.mydict[returl].append(response.url)
+        textdict = ReturnTextDiv(response)
+        result = {"url":response.url, "stamp":returl, "textdiv":textdict}
+        self.logfile.write(json.dumps(result))
+        self.logfile.write(',\n')
 
-        for onesign in response.xpath('//*[not(name()="script") and not(name()="style") and not(name()="a")]'):
-            shouldnotuse = False
-
-            for nonedisplay in onesign.xpath('ancestor-or-self::*[@style="display:none"]'):
-                shouldnotuse = True
-                break
-            if shouldnotuse:
-                continue
-            signlen = len(onesign.extract())
-            for onetext in onesign.xpath('text()'):
-                textlen = len(onetext.extract().strip())
-                if textlen > const.TEXTLEN:
-                    onlydiv = 'NoDiv'
-                    for fulldiv in onesign.xpath('ancestor-or-self::div[1]').extract():
-                        onlydiv = fulldiv[0 : fulldiv.find('>')+1]
-                    try:
-                        self.alltextdict[onlydiv][returl] += 1
-                        self.alltextdict[onlydiv]['TOTAL'] += 1
-                    except KeyError:
-                        try:
-                            self.alltextdict[onlydiv][returl] = 1
-                            self.alltextdict[onlydiv]['TOTAL'] += 1
-                        except KeyError:
-                            self.alltextdict[onlydiv] = {}
-                            self.alltextdict[onlydiv][returl] = 1
-                            self.alltextdict[onlydiv]['TOTAL'] = 1
         if crawllevel < const.MAX_CRAWL_LEVEL:
             lx = SgmlLinkExtractor()
             urls = lx.extract_links(response)
             for oneurl in urls:
                 yield scrapy.Request(oneurl.url, callback=lambda response, crawllevel=1: self.parse_text(response, crawllevel + 1))
 
-    def parse(self, response):
-        
+    def parse_testfile(self, response):
+        lx = SgmlLinkExtractor()
+        urls = lx.extract_links(response)
+        readed = 0
+        notreaded = 0
+        for oneurl in urls:
+            handle = OpenMD5File(oneurl.url, 'rb')
+            if handle == False:
+                notreaded += 1
+            else:
+                readed += 1
+                handle.close()
+        print readed, notreaded
+
 
     def parse_site(self, response):    # changed to parse to crawl all home page
         crawllevel = 0

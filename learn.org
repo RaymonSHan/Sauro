@@ -322,6 +322,9 @@ def parse(self,response):
 
 http://blog.csdn.net/tianmohust/article/details/7621424 dict in python ! very good !
 
+http://www.jb51.net/article/41972.htm except in python
+http://www.jb51.net/article/55734.htm  __xxx__ method in python  __slots__ save many memory for huge number of class
+http://blog.chinaunix.net/uid-12720249-id-2918322.html  see more for __getitem__
 
 def parse_type(self,response, typeid):
     print typeid
@@ -485,3 +488,14 @@ raymon@ubuntu:~/security/Sauro$
 
 java callback
 http://blog.csdn.net/allen_zhao_2012/article/details/8056665
+
+
+@2.获取文件夹大小，即遍历文件夹，将所有文件大小加和。遍历文件夹使用os.walk函数
+import os  
+from os.path import join, getsize  
+  
+def getdirsize(dir):  
+   size = 0L  
+   for root, dirs, files in os.walk(dir):  
+      size += sum([getsize(join(root, name)) for name in files])  
+   return size 
