@@ -329,9 +329,10 @@ http://blog.chinaunix.net/uid-12720249-id-2918322.html  see more for __getitem__
 def parse_type(self,response, typeid):
     print typeid
 
+stampall = dict(stamphave, **stampnot)
+stampboth = dict.fromkeys([x for x in stamphave if x in stampnot])
 
-
-        response.xpath('//div[@itemprop="articleBody"]/text()').extract().encode('utf-8')
+response.xpath('//div[@itemprop="articleBody"]/text()').extract().encode('utf-8')
 
 
 <div id="root">

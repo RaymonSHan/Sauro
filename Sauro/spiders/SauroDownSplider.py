@@ -18,6 +18,7 @@ from scrapy.xlib.pydispatch import dispatcher
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import Selector
 from scrapy.http import HtmlResponse
+from json import *
 
 #from Sauro.items import SauroScriptItem
 
@@ -32,11 +33,12 @@ const.JAVAFUNC = 'javafunc'
 const.HREFFUNC = 'hreffunc'
 const.FUNCHEAD = 'function main(splash) '
 const.TEXTLEN = 180
-const.MINSTAMP = 6
-const.MAX_CRAWL_LEVEL = 1
+const.MINSTAMP = 16
+const.MAX_CRAWL_LEVEL = 2
 const.PAGE_HOME = '/home/raymon/security/pages/'
 const.FILE_HOME = '/home/raymon/security/pages/00/'
-const.LOG_FILE = '/home/raymon/security/Saurolog'
+const.LOG_FILE = '/home/raymon/security/Saurolog_0922-level2'
+#const.LOG_FILE = '/home/raymon/security/Saurolog_0923-level3'
 
 const.HOST = 'http://stock.sohu.com/'
 const.ALLOW = 'stock.sohu.com'
@@ -176,11 +178,50 @@ def SaveResponse(response):
     savefile.close()
     return returnval
 
+# find in files with subpath
 def iterfindfiles(path, fnexp):
     for root, dirs, files in os.walk(path):
         for filename in fnmatch.filter(files, fnexp):
             yield os.path.join(root, filename)
 
+# union two dict and add value for same key
+def UnionAddDict(origin, added):
+    for k in added.keys():
+        if k in origin.keys():
+            origin[k] += added[k]
+        else:
+            origin[k] = added[k]
+
+# remove given substr, and return remain list
+# length of remain list must larger or equal minlen
+# may not use yet
+def RemoveSubstr(origin, sublist, minlen = const.MINSTAMP):
+    outputstr = []
+    originlen = len(origin) + 1
+    remainstr = dict.fromkeys(range(originlen), 1)
+    remainstr[originlen-1] = 0                      # mark end for finish
+    for onesub in sublist:
+        findstart = origin.find(onesub)
+        while findstart != -1:
+            findend = findstart + len(onesub)
+            for fkey in range(findstart, findend):
+                remainstr[fkey] = 0
+            findstart = origin.find(onesub, findend)
+           
+    remainstart = 0
+    remainend = 0
+    inremain = 0
+    for remainkey in range(originlen):       
+        if inremain == 0 and remainstr[remainkey] != 0:       # begin record
+            remainstart = remainkey
+            inremain = 1
+        if inremain != 0 and remainstr[remainkey] == 0:       # record end, output
+            remainend = remainkey
+            inremain = 0
+            if remainend - remainstart > minlen:
+                outputstr.append(origin[remainstart:remainend])
+    return outputstr
+    
 def ReturnStampKey(strlist, otherlist):
     firststr = strlist[0]
     returnlist = []
@@ -193,7 +234,6 @@ def ReturnStampKey(strlist, otherlist):
             checknothit = 1
         else:
             checkstr = firststr[beginpos:endpos]
-            print 'checkstr in mainloop =', checkstr
             checkhit = 0
             checknothit = 0
             for descstr in strlist:
@@ -214,6 +254,242 @@ def ReturnStampKey(strlist, otherlist):
             endpos += 1
     return returnlist
 
+def inSubstring(checkstr, returnlist):              # whether the checkstr is one of the substring of a string list
+    for onelist in returnlist.keys():
+        if onelist.find(checkstr) != -1:
+            return 0
+    return -1
+
+def MatchKeys(origin, returnlist):
+    originlen = len(origin)
+    remainstr = dict.fromkeys(range(originlen), 1)
+    for onekey in returnlist:
+        findstart = origin.find(onekey)
+        while findstart != -1:
+            findend = findstart + len(onekey)
+            for fkey in range(findstart, findend):
+                remainstr[fkey] = 0
+            findstart = origin.find(onekey, findend)
+    returnval = 0
+    for oneremain in remainstr:
+        if remainstr[oneremain] == 1:
+            returnval += 1
+    return returnval
+    
+def ReturnProbabilityStampKey(dictstr):
+    returnlist = {}
+    notFirstSearch = False
+    for searchstr in dictstr.keys():
+        beginpos = 0
+        lastpos = len(searchstr)
+        havechecked = 0
+        endpos = const.MINSTAMP
+        endhit = dict.fromkeys(range(len(searchstr) + 1), 1)        # record the max size
+        
+        while beginpos <= lastpos - const.MINSTAMP:
+            endpos = beginpos + const.MINSTAMP
+            lasthit = 0
+            while endpos <= lastpos:
+                checkstr = searchstr[beginpos:endpos]
+                if notFirstSearch and inSubstring(checkstr, returnlist) == 0:
+                    endpos += 1
+                    continue                                        # this substring have checked, may be changed later
+                    
+                #print 'checkstr in mainloop =', checkstr
+                checkhit = 0
+                for descstr in dictstr.keys():
+                    if descstr.find(checkstr) != -1:
+                        checkhit += dictstr[descstr]
+
+                if lasthit == checkhit:                             # 1234x is found, 1234 can be delete
+                    del returnlist[checkstr[:-1]]
+                lasthit = checkhit
+                                    
+                if checkhit > endhit[endpos]:
+                    endhit[endpos] = checkhit
+                    if checkhit == 1:                       # only found in itself, no more necessary
+                        endpos = lastpos + 1
+                    else:
+                        returnlist[checkstr] = checkhit
+                        endpos += 1
+                else:                                       # string with more ahead have checked
+                    endpos = lastpos + 1
+            beginpos += 1
+        notFirstSearch = True
+    return returnlist
+
+def ReturnStringWithSub(substring, totalstring):            # totalstring is {}
+    returnstring = []
+    returnnumber = 0
+    for onestring in totalstring.keys():
+        if onestring.find(substring) != -1:
+            returnstring.append(onestring)
+            returnnumber += totalstring[onestring]
+    return returnstring, returnnumber
+            
+def ReturnStringMaxLenght(totalstring):                     # totalstring is []
+    maxlength = 0
+    for onestring in totalstring:
+        onelen = len(onestring)
+        if onelen > maxlength:
+            maxlength = onelen
+    return maxlength
+    
+def ReturnStringMinLenght(totalstring):                     # totalstring is []
+    minlength = 999999
+    for onestring in totalstring:
+        onelen = len(onestring)
+        if onelen < minlength:
+            minlength = onelen
+    return minlength
+    
+def ReturnStringTotalLenght(totalstring):                   # totalstring is []
+    totallength = 0
+    for onestring in totalstring:
+        totallength += len(onestring)
+    return totallength    
+
+def IsContentPage(page, realkeylist):                      # realkey is [[str,str][str][str,str]]
+    order = 0
+    for onekeylist in realkeylist:
+        hitonelist = True
+        for onekey in onekeylist:
+            if page.find(onekey) == -1:
+                hitonelist = False
+                break
+        if hitonelist:
+            return order
+        order += 1
+    return -1
+
+# total number : 7955, with textdiv : 1206
+# total stamp : 623, with textdiv : 145, without 534, while 56 in both condition
+
+class SauroReadSpider(scrapy.Spider):
+    name = 'SauroRead'
+    allowed_domains = [const.ALLOW]
+    start_urls = [const.HOST]
+    jsoncontent = None
+    logfile = None
+    
+    def parse(self, response):
+        allrule = {}
+        allrule['stock.sohu.com'] = []
+        self.logfile = open(const.LOG_FILE, 'rb')
+        urllist = JSONDecoder().decode(self.logfile.read())['totalresult']
+        self.logfile.close()   
+
+        stamphave = {}
+        stampnothave = {}
+        minrate = 0.0
+        maxrate = 0.0
+        
+        for oneurl in urllist:
+            if len(oneurl['textdiv']) != 0:
+                try:
+                    stamphave[oneurl['stamp']] = 1
+                except KeyError:
+                    stamphave[oneurl['stamp']] = 1
+            else:
+                try:
+                    stampnothave[oneurl['stamp']] = 1
+                except KeyError:
+                    stampnothave[oneurl['stamp']] = 1
+                    
+        for loops in range(20):
+            subkey = ReturnProbabilityStampKey(stamphave)
+            if len(subkey) < 1:
+                break
+            sortkey = sorted(subkey.items(), key=lambda d: len(d[0])*d[1]*d[1], reverse=True)
+            onekey, number = sortkey[0]                 # get the most subkey
+        
+            simstring, returnnumber = ReturnStringWithSub(onekey, stamphave)
+            realkey = ReturnStampKey(simstring, None)
+            allrule['stock.sohu.com'].append(realkey)
+            
+            
+            
+            
+            print realkey, returnnumber
+            for onestr in simstring:
+                del stamphave[onestr]
+                
+        return
+        print allrule['stock.sohu.com']
+        
+        totalnumber = 0
+        for oneurl in urllist:
+            if IsContentPage(oneurl['stamp'], allrule['stock.sohu.com']):
+                totalnumber += 1
+                print oneurl['url'], oneurl['stamp']
+        print totalnumber
+        return           
+            
+            
+        maxlength = ReturnStringMaxLenght(simstring)
+        minlength = ReturnStringMinLenght(simstring)
+        totallength = ReturnStringTotalLenght(realkey)
+        print 'maxlength=', maxlength
+        print 'minlength=', minlength
+        print 'totallength=', totallength
+        maxrate = float(totallength) / maxlength
+        minrate = float(totallength) / minlength
+        print minrate, maxrate
+        print realkey
+        
+
+        
+        for (onekey, number) in sortkey:
+            print onekey, number, len(onekey)*number*number
+        return                   
+                    
+        for oneurl in urllist:
+            textdivlist = oneurl['textdiv']
+            if len(textdivlist) != 0:
+                textdiv = textdivlist[0]
+                if not (textdiv in stamphave.keys()):
+                    stamphave[textdiv] = []
+                if not (oneurl['stamp'] in stamphave[textdiv]):
+                    stamphave[textdiv].append(oneurl['stamp'])
+
+        subkey = ReturnProbabilityStampKey(stamphave)
+        sortkey = sorted(subkey.items(), key=lambda d: len(d[0])*d[1], reverse=False)
+        for (onekey, number) in sortkey:
+            print onekey, number
+        return
+                    
+       
+        
+        
+        
+        
+        
+        
+        for oneurl in urllist:
+            if len(oneurl['textdiv']) != 0:
+                try:
+                    stamphave[oneurl['stamp']] = 1
+                except KeyError:
+                    stamphave[oneurl['stamp']] = 1
+            else:
+                try:
+                    stampnothave[oneurl['stamp']] = 1
+                except KeyError:
+                    stampnothave[oneurl['stamp']] = 1
+        sortstamp = sorted(stamphave.items(), key=lambda d: d[0], reverse=False)
+        for (onekey, number) in sortstamp:
+            print onekey, number
+        return     
+                
+
+        
+        for onediv in stamphave:
+            sortdiv = sorted(stamphave[onediv], key=lambda d: d[0], reverse=False)
+            print onediv
+            for onestamp in sortdiv:
+                print onestamp
+        return
+    
 class SauroScriptSpider(scrapy.Spider):
     name = 'SauroSite'
     allowed_domains = [const.ALLOW]
