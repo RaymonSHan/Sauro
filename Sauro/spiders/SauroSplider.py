@@ -8,10 +8,10 @@
 '''
 ORIGIN:
 Sauro is an abbreviation Sauropsida ("lizard faces"). A group of amniotes that includes all existing reptiles and birds and their fossil ancestors, in wiki.
-Sauro use scarpy, a splider framework in python, see http://doc.scrapy.org/ Other prerequisites included XPath, python, lua.
+Sauro use scarpy, a splider framework in python, see http://doc.scrapy.org/. Other prerequisites included XPath, python, lua.
 
 VERSION:
-V0.02  : Sept.28 '15 : first reorgnize, after verifiy of major algorithm.
+V0.02  : Sept.28 '15 : first reorgnize, after verified major algorithm.
 V0.01  : Sept. 1 '15 : This is my first python project, from empty
 
 GOAL:
@@ -20,24 +20,35 @@ SPLIDER, Get TITLE and CONTENT from Industry Information
 ALGORITHM:
 C001   : Get obvious content page
   V001 : GetObviousContent(response)
-         Any page within continuous text larger than MIN_TEXT_LEN
+         Any page within continuous text longer than MIN_TEXT_LEN
 
-C002   : Get fingerprint of obvious content page
+C002   : Get fingerprint of given page
   V001 : (obsoletes) by division of URL
-  V002 : by structural tag in html page, list in HTML_STRUCT_TAG[]
+  V002 : GetPageFingerprint(response)
+         by structural tag in html page, as HTML_STRUCT_TAG
 
-C003   : Group fingerprint
-  V001 : by parent <div> tag of continuous text
-  V002 : by common eigenvalues in all fingerprint
+C003   : Get eigenvalue from fingerprint
+  V001 : GetEigenvalueInAll(strlist, otherlist)
+         For pages with same parent <div> tag of continuous text, get eigenvalues longer than MIN_EIGENVALUE_LEN from fingerprint for these pages, which given in strlist. All eigenvalues must in every strlist, but not in any otherlist.
+  V002 : GetFuzzyEigenvalue(string)
+         by common eigenvalues in all fingerprint
+  V003 :
+         mix C003V001 and C003V002
 
-C004   : Get Title and Content in given page by fingerprint
+C004   : Get TITLE and CONTENT and URL, from pages with eigenvalue in fingerprint
 
 L001   : Get obvious list page
-  V001 : Any page with link to content page large than MIN_CONTENT_LEN
+  V001 : Any page contain content page large than MIN_CONTENT_LEN
 
-L002   : Get linked list page
+L002   : Get linked list page, via href in obvious list page
 
-L003   : Get most frequency list page
+L003   : Get most frequency list page, by detect new content page appear
+
+S001   : Output most frequency list page, by C001, C002, C003, L001, L002, L003
+         This is a splider, only output list page, but not get CONTENT
+
+S002   : Get TITLE and CONTENT by C004 from pages given by S001
+         This is a splider, do major job
 '''
 
 import scrapy
@@ -51,11 +62,16 @@ import errno                                   # for error in open
 # for signals in scarpy, such as dispatcher.connect(self.initialize, signals.engine_started) 
 from scrapy import signals
 from scrapy.xlib.pydispatch import dispatcher
+
 # for href iteration
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
-# for read html file, instead of response
+from scrapy.linkextractors.sgml import SgmlLinkExtractor
+# (deprecated) from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
+
+# for create Selector from read html file, instead of response
+# useful in test, but may not in real work
 from scrapy.selector import Selector
 from scrapy.http import HtmlResponse
+
 # for json process
 from json import *
 
@@ -67,34 +83,14 @@ class const:
             raise self.ConstError, "Can't rebind const (%s)" %name 
         self.__dict__[name]=value
 
-# uesd in GetObviousContent
+
 const.MIN_TEXT_LEN             = 180
 const.PAGE_HOME                = '/home/raymon/security/pages_0922-level2/'
+#const.HTML_STRUCT_TAG         = '//div[@*] | //table[@*] | //form[@*] | //script[@*] | //style[@*]'
+const.HTML_STRUCT_TAG          = '//div | //table | //form | //script | //style'
+const.MIN_EIGENVALUE_LEN      = 16
 
-# for C001V001 : Get obvious content page
-# IN  : Selector object, such as Respose
-# OUT : List of <div> tag, which contain text larger than MIN_TEXT_LEN
-def GetObviousContent(response):
-    textdict = []
-# the script and css and a tag is not useful
-    for onesign in response.xpath('//*[not(name()="script") and not(name()="style") and not(name()="a")]'):
-        shouldnotuse = False
-# the text not displayed is not useful
-        for nonedisplay in onesign.xpath('ancestor-or-self::*[@style="display:none"]'):
-            shouldnotuse = True
-            break
-        if shouldnotuse:
-            continue
-        signlen = len(onesign.extract())
-        for onetext in onesign.xpath('text()'):
-            textlen = len(onetext.extract().strip())
-            if textlen > const.MIN_TEXT_LEN:
-                onlydiv = 'NoDiv'
-                for fulldiv in onesign.xpath('ancestor-or-self::div[1]').extract():
-                    onlydiv = fulldiv[0 : fulldiv.find('>')+1]
-                textdict.append(onlydiv)
-    return textdict
-
+# create filename by md5 for url, with subdir
 def GetMD5Filename(urlname):
     md5val = hashlib.md5()
     md5val.update(urlname)
@@ -105,25 +101,179 @@ def CreateSelectorbyFile(filename):
     with open(filename, 'rb') as f:
         sel = Selector(text=f.read(), type="html")
     return sel
+    
+def CreateSelectorbyString(string):
+    return Selector(text=string, type="html")
 
 # not means get response from web, get it from cache file by Sauro
-# ahead with http://
+# ahead with http:// in my project
 def CreateSelectorbyURL(urlname):
     return CreateSelectorbyFile(GetMD5Filename(urlname))
 
+# C001V001 : Get obvious content page
+# IN  : Selector object, such as Response
+# OUT : List of <div> tag, which contain text longer than MIN_TEXT_LEN
+def GetObviousContent(response):
+    textdict = []
+# the <script> and <style> and <a> tag are not useful
+    for onesign in response.xpath('//*[not(name()="script") and not(name()="style") and not(name()="a")]'):
+# the text not displayed is not useful, may add more exclude judge here
+        if onesign.xpath('ancestor-or-self::*[@style="display:none"]'):
+            continue
+        for onetext in onesign.xpath('text()'):
+            textlen = len(onetext.extract().strip())
+            if textlen > const.MIN_TEXT_LEN:
+                try:
+# add most near <div> tag into return, and given default value
+                    fulldiv = onesign.xpath('ancestor-or-self::div[1]').extract()[0]
+                    onlydiv = fulldiv[0 : fulldiv.find('>')+1]
+                except IndexError:
+                    onlydiv = 'NoDiv'
+                if onlydiv not in textdict:
+                    textdict.append(onlydiv)
+    return textdict
+
+# C002V002 : Get fingerprint of given page
+# IN  : Selector object, such as Response
+# OUT : string of page fingerprint
+#
+# the sequence <script><div><div><div><table><table><div><script><script> return MSD2T1DS1M
+def GetPageFingerprint(response):
+    lastname = ''
+    thisname = ''
+    lastnum = 0
+    returnfinger = 'M'
+    for onesign in response.xpath(const.HTML_STRUCT_TAG).extract():
+# onesign start with '<', thisname is d,t,f,s
+        thisname = onesign[1:2]
+        if lastname == thisname:
+            lastnum += 1
+        else:
+            returnfinger += lastname
+            if lastnum != 0:
+                returnfinger += str(lastnum)
+                lastnum = 0
+            lastname = thisname
+    returnfinger += lastname
+    if lastnum != 0:
+        returnfinger += str(lastnum)
+# the head and tail are 'M'
+    returnfinger += 'M'
+    return returnfinger
+
+# whether the checkstr is substring of one of string in strlist
+# return sequence in strlist for first found, or return -1 for not found
+def InSubstring(checkstr, strlist):
+    order = 0
+    for onelist in strlist:
+        if onelist.find(checkstr) != -1:
+            return order
+        order += 1
+    return -1
+
+# Divide given stringlist into two part. One list have all eigenvalue, other list have none or part.
+def DivideByEigenvalue(eigenlist, totallist):
+    withlist = []
+    withoutlist = []
+    for onelist in totallist:
+        hitall = True
+        for oneeigen in eigenlist:
+            if onelist.find(oneeigen) == -1:
+                hitall = False
+                break
+        if hitall:
+            withlist.append(onelist)
+        else:
+            withoutlist.append(onelist)
+    return withlist, withoutlist
+
+# C003V001 : Get eigenvalue from fingerprint
+# IN  : strlist[]   : List of string to generate fingerprint
+#       otherlist[] : List of string must not contain fingerprint
+# OUT : List of fingerprint, should longer than MIN_EIGENVALUE_LEN
+def GetEigenvalueInAll(strlist, otherlist = []):
+    firststr = strlist[0]
+    returnlist = []
+    beginpos = 0
+    endpos = const.MIN_EIGENVALUE_LEN
+    lastpos = len(firststr)
+    havechecked = 0
+    misshit = 0
+    while endpos <= lastpos + 1:
+# the +1 in above while and following if, are smart condition for last match at end
+        if endpos > lastpos:
+            misshit = 1
+        else:
+            checkstr = firststr[beginpos:endpos]
+            misshit = 0
+            for descstr in strlist:
+                if descstr.find(checkstr) == -1:
+# the eigenvalue must in ervery strlist, any miss will break check
+                    misshit = 1
+                    break
+        if misshit == 1:
+            if havechecked == 1:
+# here means, had find shorter eigenvalue before, but now it miss. 
+# So should add the shorter one as eigenvalue
+                maybekey = firststr[beginpos:endpos-1]
+                if InSubstring(maybekey, otherlist) == -1:
+                    returnlist.append(maybekey)
+                beginpos = endpos
+                endpos = beginpos + const.MIN_EIGENVALUE_LEN
+                havechecked = 0
+            else:
+# not found, goon step
+                beginpos += 1
+                endpos += 1
+        else:
+# this is eigenvalue, but may have longer, mark it and add later
+# of course, endpos can increase more than one. may optimize later
+            havechecked = 1
+            endpos += 1
+    return returnlist
+
+testlist = '''Ms9ds1ds3d2tds1d1s1d12s2d7sd2td9s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d12s2d7sd2td5s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd18s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd18s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd15s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd8sd4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd13s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd9td4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd14s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd10sd4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd10td4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
+Ms8ds1ds3d2tds1d1s1d13sd9tdtd5s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd9td6s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd15s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd17s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd12sd4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd17s2d1sd1s10ds2d9s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
+Ms9ds1ds3d2tds1d1s1d13sd13s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
+srgtryy6uiyuiyuopopp980987iouyiyl
+dtwer346ti
+rdtgtu7iigjhgjy
+s1d2fds1dtds2d2tds1d2sdadsragdgtdsd18sdsd4s3d2s12ds'''
+
+otherlist = ['afdsatdsd18sdsd4s3s1d2fds1dtds2d2tds1d2sdd2s12dsafdsrewr','aserghgfhthtr']
+eigen = ['ds1ds3d2tds1d1s1d1', 's1d2fds1dtds2d2tds1d2sd', 'tdsd18sdsd4s3d2s12ds']
+
 if __name__ == '__main__':
-    print GetObviousContent(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
- 
-
+#    print GetObviousContent(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
+#    print GetPageFingerprint(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
+#    print GetEigenvalueInAll(testlist.split('\n'), otherlist)
+    print DivideByEigenvalue(eigen, testlist.split('\n'))
+    
 # ReturnTextDiv -> GetObviousContent
-
-
-const.MINSTAMP = 16
+# ReturnStamp -> GetPageFingerprint
+# MINSTAMP -> MIN_EIGENVALUE_LEN
+# ReturnStampKey
 
 
 const.FILE_HOME = '/home/raymon/security/pages/00/'
 const.LOG_FILE = '/home/raymon/security/Saurolog_0922-level2'
 #const.LOG_FILE = '/home/raymon/security/Saurolog_0923-level3'
+
 
 
 def ReturnExpr(responseurl):
@@ -137,26 +287,7 @@ def ReturnExpr(responseurl):
             retstr += str(splen)
     return retstr
 
-def ReturnStamp(response):
-    lastname = ''
-    lastnum = 0
-    totalname = 'M'
-    for onesign in response.xpath('//div[@*] | //table[@*] | //form[@*] | //script[@*] | //style[@*]').extract():
-        onlysign = onesign[0 : onesign.find('>')+1]
-        thisname = onesign[1:2]
-        if lastname == thisname:
-            lastnum += 1
-        else:
-            totalname += lastname
-            if lastnum != 0:
-                totalname += str(lastnum)
-                lastnum = 0
-            lastname = thisname
-    totalname += lastname
-    if lastnum != 0:
-        totalname += str(lastnum)
-    totalname += 'M'
-    return totalname
+
 
 def GetSingleDiv(onediv):           # not pass yet
     alllength = len(onediv.extract())
@@ -181,8 +312,6 @@ def OpenPathFile(filename, retry=0, rw='wb'):        # create dirs and file
                 return False
             return OpenPathFile(filename, retry+1, rw)
     return opfile
-        
-
     
 def SaveResponse(response):
     returnval = True
@@ -215,7 +344,7 @@ def UnionAddDict(origin, added):
 # remove given substr, and return remain list
 # length of remain list must larger or equal minlen
 # may not use yet
-def RemoveSubstr(origin, sublist, minlen = const.MINSTAMP):
+def RemoveSubstr(origin, sublist, minlen = const.MIN_EIGENVALUE_LEN):
     outputstr = []
     originlen = len(origin) + 1
     remainstr = dict.fromkeys(range(originlen), 1)
@@ -242,44 +371,6 @@ def RemoveSubstr(origin, sublist, minlen = const.MINSTAMP):
                 outputstr.append(origin[remainstart:remainend])
     return outputstr
     
-def ReturnStampKey(strlist, otherlist):
-    firststr = strlist[0]
-    returnlist = []
-    beginpos = 0
-    endpos = const.MINSTAMP
-    lastpos = len(firststr)
-    havechecked = 0     
-    while endpos <= lastpos + 1:
-        if endpos > lastpos:                        # for add last match
-            checknothit = 1
-        else:
-            checkstr = firststr[beginpos:endpos]
-            checkhit = 0
-            checknothit = 0
-            for descstr in strlist:
-                if descstr.find(checkstr) == -1:
-                    checknothit = 1
-                    break
-        if checknothit == 1:
-            if havechecked == 1:
-                returnlist.append(firststr[beginpos:endpos-1])
-                beginpos = endpos
-                endpos = beginpos + const.MINSTAMP
-                havechecked = 0
-            else:
-                beginpos += 1
-                endpos += 1
-        else:
-            havechecked = 1
-            endpos += 1
-    return returnlist
-
-def inSubstring(checkstr, returnlist):              # whether the checkstr is one of the substring of a string list
-    for onelist in returnlist.keys():
-        if onelist.find(checkstr) != -1:
-            return 0
-    return -1
-
 def MatchKeys(origin, returnlist):
     originlen = len(origin)
     remainstr = dict.fromkeys(range(originlen), 1)
