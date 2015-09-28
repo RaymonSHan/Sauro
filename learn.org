@@ -326,6 +326,8 @@ http://www.jb51.net/article/41972.htm except in python
 http://www.jb51.net/article/55734.htm  __xxx__ method in python  __slots__ save many memory for huge number of class
 http://blog.chinaunix.net/uid-12720249-id-2918322.html  see more for __getitem__
 
+http://www.cnblogs.com/yuxc/archive/2011/08/07/2130229.html for python in language process 
+
 def parse_type(self,response, typeid):
     print typeid
 
@@ -500,3 +502,5 @@ def getdirsize(dir):
    for root, dirs, files in os.walk(dir):  
       size += sum([getsize(join(root, name)) for name in files])  
    return size 
+   
+   

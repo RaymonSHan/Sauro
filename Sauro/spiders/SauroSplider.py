@@ -1,26 +1,65 @@
+# -*- coding:gbk -*-
+#
+# Althought I do not input any Chinese in my project, I still insert this progma before any codes.
+# Recommen GBK instead of Unicode or UTF-8 in any case.
+#
+# Wrapping Column 132.
+
+'''
+ORIGIN:
+Sauro is an abbreviation Sauropsida ("lizard faces"). A group of amniotes that includes all existing reptiles and birds and their fossil ancestors, in wiki.
+Sauro use scarpy, a splider framework in python, see http://doc.scrapy.org/ Other prerequisites included XPath, python, lua.
+
+VERSION:
+V0.02  : Sept.28 '15 : first reorgnize, after verifiy of major algorithm.
+V0.01  : Sept. 1 '15 : This is my first python project, from empty
+
+GOAL:
+SPLIDER, Get TITLE and CONTENT from Industry Information
+
+ALGORITHM:
+C001   : Get obvious content page
+  V001 : GetObviousContent(response)
+         Any page within continuous text larger than MIN_TEXT_LEN
+
+C002   : Get fingerprint of obvious content page
+  V001 : (obsoletes) by division of URL
+  V002 : by structural tag in html page, list in HTML_STRUCT_TAG[]
+
+C003   : Group fingerprint
+  V001 : by parent <div> tag of continuous text
+  V002 : by common eigenvalues in all fingerprint
+
+C004   : Get Title and Content in given page by fingerprint
+
+L001   : Get obvious list page
+  V001 : Any page with link to content page large than MIN_CONTENT_LEN
+
+L002   : Get linked list page
+
+L003   : Get most frequency list page
+'''
+
 import scrapy
 import json
 import string
-import hashlib                              # for md5
-import fnmatch                              # for findfile
-import errno                                # for error in open
+import os                                      # for findfile & error in open
+import hashlib                                 # for md5
+import fnmatch                                 # for findfile
+import errno                                   # for error in open
 
-###
-# http://edu.sse.com.cn/eduact/inact/popup_index.shtml?includPage=/eduact/edu/c/68007.html
-#
-# $(document).ready(function(){
-###
-
-
+# for signals in scarpy, such as dispatcher.connect(self.initialize, signals.engine_started) 
 from scrapy import signals
 from scrapy.xlib.pydispatch import dispatcher
+# for href iteration
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
+# for read html file, instead of response
 from scrapy.selector import Selector
 from scrapy.http import HtmlResponse
+# for json process
 from json import *
 
-#from Sauro.items import SauroScriptItem
-
+# const for python from http://www.jb51.net/article/60434.htm
 class const: 
     class ConstError(TypeError):pass 
     def __setattr__(self, name, value): 
@@ -28,58 +67,64 @@ class const:
             raise self.ConstError, "Can't rebind const (%s)" %name 
         self.__dict__[name]=value
 
-const.JAVAFUNC = 'javafunc'
-const.HREFFUNC = 'hreffunc'
-const.FUNCHEAD = 'function main(splash) '
-const.TEXTLEN = 180
+# uesd in GetObviousContent
+const.MIN_TEXT_LEN             = 180
+const.PAGE_HOME                = '/home/raymon/security/pages_0922-level2/'
+
+# for C001V001 : Get obvious content page
+# IN  : Selector object, such as Respose
+# OUT : List of <div> tag, which contain text larger than MIN_TEXT_LEN
+def GetObviousContent(response):
+    textdict = []
+# the script and css and a tag is not useful
+    for onesign in response.xpath('//*[not(name()="script") and not(name()="style") and not(name()="a")]'):
+        shouldnotuse = False
+# the text not displayed is not useful
+        for nonedisplay in onesign.xpath('ancestor-or-self::*[@style="display:none"]'):
+            shouldnotuse = True
+            break
+        if shouldnotuse:
+            continue
+        signlen = len(onesign.extract())
+        for onetext in onesign.xpath('text()'):
+            textlen = len(onetext.extract().strip())
+            if textlen > const.MIN_TEXT_LEN:
+                onlydiv = 'NoDiv'
+                for fulldiv in onesign.xpath('ancestor-or-self::div[1]').extract():
+                    onlydiv = fulldiv[0 : fulldiv.find('>')+1]
+                textdict.append(onlydiv)
+    return textdict
+
+def GetMD5Filename(urlname):
+    md5val = hashlib.md5()
+    md5val.update(urlname)
+    filename = md5val.hexdigest()
+    return const.PAGE_HOME + filename[0:2]+'/'+filename[2:4]+'/'+filename
+
+def CreateSelectorbyFile(filename):
+    with open(filename, 'rb') as f:
+        sel = Selector(text=f.read(), type="html")
+    return sel
+
+# not means get response from web, get it from cache file by Sauro
+# ahead with http://
+def CreateSelectorbyURL(urlname):
+    return CreateSelectorbyFile(GetMD5Filename(urlname))
+
+if __name__ == '__main__':
+    print GetObviousContent(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
+ 
+
+# ReturnTextDiv -> GetObviousContent
+
+
 const.MINSTAMP = 16
-const.MAX_CRAWL_LEVEL = 2
-const.PAGE_HOME = '/home/raymon/security/pages/'
+
+
 const.FILE_HOME = '/home/raymon/security/pages/00/'
 const.LOG_FILE = '/home/raymon/security/Saurolog_0922-level2'
 #const.LOG_FILE = '/home/raymon/security/Saurolog_0923-level3'
 
-const.HOST = 'http://stock.sohu.com/'
-const.ALLOW = 'stock.sohu.com'
-
-def DefineStart():
-    return const.FUNCHEAD
-
-def DefineFunction(fname, fscript):
-    return 'local ' + fname + ' = splash:jsfunc([[ function (){' + fscript + '} ]]) '
-
-def DefineJavaScript(script):
-    return DefineFunction(const.JAVAFUNC, script)
-
-def DefineLocation():
-    script = 'var ishref = document.location.href; return ishref;'
-    return DefineFunction(const.HREFFUNC, script)
-
-def DefineSplashGo(script):
-    return 'splash:go(\"' + script + '\") '
-
-def DefineAssign(vname, fname=None):
-    if fname == None:
-        return vname + '=' + vname + '() '
-    else:
-        return vname + '=' + fname + '() '
-
-def DefineWait(waittime):
-    return 'splash:wait(' + str(waittime) + ') '
-
-def DefineProcess(waittime):
-    return DefineWait(waittime) + DefineAssign(const.JAVAFUNC) + DefineWait(waittime) + DefineAssign(const.HREFFUNC)
-
-def DefineEnd():
-    return 'return {getreturn=' + const.HREFFUNC + '} end '
-
-def DefineMeta(func):
-    return {
-        'splash': {
-            'args': {'lua_source': func},
-            'endpoint': 'execute'
-        }
-    }
 
 def ReturnExpr(responseurl):
     spliturl = responseurl.split('/')
@@ -113,26 +158,6 @@ def ReturnStamp(response):
     totalname += 'M'
     return totalname
 
-def ReturnTextDiv(response):
-    textdict = []
-    for onesign in response.xpath('//*[not(name()="script") and not(name()="style") and not(name()="a")]'):
-        shouldnotuse = False
-
-        for nonedisplay in onesign.xpath('ancestor-or-self::*[@style="display:none"]'):
-            shouldnotuse = True
-            break
-        if shouldnotuse:
-            continue
-        signlen = len(onesign.extract())
-        for onetext in onesign.xpath('text()'):
-            textlen = len(onetext.extract().strip())
-            if textlen > const.TEXTLEN:
-                onlydiv = 'NoDiv'
-                for fulldiv in onesign.xpath('ancestor-or-self::div[1]').extract():
-                    onlydiv = fulldiv[0 : fulldiv.find('>')+1]
-                textdict.append(onlydiv)
-    return textdict
-
 def GetSingleDiv(onediv):           # not pass yet
     alllength = len(onediv.extract())
 
@@ -157,11 +182,7 @@ def OpenPathFile(filename, retry=0, rw='wb'):        # create dirs and file
             return OpenPathFile(filename, retry+1, rw)
     return opfile
         
-def OpenMD5File(urlname, rw='wb'):
-    md5val = hashlib.md5()   
-    md5val.update(urlname)   
-    filename = md5val.hexdigest()   
-    return OpenPathFile(const.PAGE_HOME + filename[0:2]+'/'+filename[2:4]+'/'+filename, 0, rw)
+
     
 def SaveResponse(response):
     returnval = True
@@ -360,6 +381,54 @@ def IsContentPage(page, realkeylist):                      # realkey is [[str,st
             return order
         order += 1
     return -1
+
+const.JAVAFUNC = 'javafunc'
+const.HREFFUNC = 'hreffunc'
+const.FUNCHEAD = 'function main(splash) '
+const.MAX_CRAWL_LEVEL = 2
+const.HOST = 'http://stock.sohu.com/'
+const.ALLOW = 'stock.sohu.com'
+
+def DefineStart():
+    return const.FUNCHEAD
+
+def DefineFunction(fname, fscript):
+    return 'local ' + fname + ' = splash:jsfunc([[ function (){' + fscript + '} ]]) '
+
+def DefineJavaScript(script):
+    return DefineFunction(const.JAVAFUNC, script)
+
+def DefineLocation():
+    script = 'var ishref = document.location.href; return ishref;'
+    return DefineFunction(const.HREFFUNC, script)
+
+def DefineSplashGo(script):
+    return 'splash:go(\"' + script + '\") '
+
+def DefineAssign(vname, fname=None):
+    if fname == None:
+        return vname + '=' + vname + '() '
+    else:
+        return vname + '=' + fname + '() '
+
+def DefineWait(waittime):
+    return 'splash:wait(' + str(waittime) + ') '
+
+def DefineProcess(waittime):
+    return DefineWait(waittime) + DefineAssign(const.JAVAFUNC) + DefineWait(waittime) + DefineAssign(const.HREFFUNC)
+
+def DefineEnd():
+    return 'return {getreturn=' + const.HREFFUNC + '} end '
+
+def DefineMeta(func):
+    return {
+        'splash': {
+            'args': {'lua_source': func},
+            'endpoint': 'execute'
+        }
+    }
+
+#from Sauro.items import SauroScriptItem
 
 # total number : 7955, with textdiv : 1206
 # total stamp : 623, with textdiv : 145, without 534, while 56 in both condition
@@ -822,3 +891,11 @@ class MySpider(scrapy.Spider):
                 'endpoint': 'execute'
             }
         })
+
+
+
+###
+# http://edu.sse.com.cn/eduact/inact/popup_index.shtml?includPage=/eduact/edu/c/68007.html
+#
+# $(document).ready(function(){
+###
