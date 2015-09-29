@@ -537,6 +537,16 @@ u'<div class="text clear" id="contentText">': [u'Ms6ds1ds3d2tds1d1s1d',         
 u'<div class="part">': [u'Ms6d3sd2sd3fd']}
 
 
+{u'<div itemprop="articleBody">': [u'ds1ds3d2tds1d1s1d1', u's1d2fds1dtds2d2tds1d2sd', u'tdsd18sdsd4s3d2s12dsM'], u'<div class="BIZ_itemB_content">': [u'Ms6d3sd2sd3fd6t1d'], u'<div class="txt">': [u's2d3s1dsd5sds4d4s1d3sds1ds4dsM'], u'<div class="news_content content">': [u'Msd3fd8tdtd2tdtd2tdtd4tdtdtd6t'], u'<div class="text clear" id="contentText">': [u'Ms6ds1ds3d2tds1d1s1d', u's4ds3ds2d7s1d2fds1dtds2d28tds1d2sd5sd20sd61tdsd18sdsd4s5d2s12dsM']}
+PART match <div itemprop="articleBody"> Ms6ds1ds3d2tds1d1s1d16sdtd4s4ds3ds2d7s1d2fds1dtds2d28tds1d2sd5sd20sd61tdsd18sdsd4s5d2s12dsM tdsd18sdsd4s3d2s12dsM
+PART match <div itemprop="articleBody"> Ms6ds1ds3d2tds1d1s1d17td6s4ds3ds2d7s1d2fds1dtds2d28tds1d2sd5sd20sd61tdsd18sdsd4s5d2s12dsM tdsd18sdsd4s3d2s12dsM
+PART match <div itemprop="articleBody"> Ms6ds1ds3d2tds1d1s1d16td4s4ds3ds2d7s1d2fds1dtds2d28tds1d2sd5sd20sd61tdsd18sdsd4s5d2s12dsM tdsd18sdsd4s3d2s12dsM
+PART match <div itemprop="articleBody"> Ms6ds1ds3d2tds1d1s1d26s4ds3ds2d6s1d2fds1dtds2d28tds1d2sd5sd20sd61tdsd18sdsd4s3d2s12dsM tdsd18sdsd4s3d2s12dsM
+PART match <div itemprop="articleBody"> Ms9ds1ds3d2tds1d1s1d12s2d7sd2tdtdtdtdtd6s2d2sd1s10ds2d10s1d2fds1dtds2d28tds1d2sd7sd61tdsd18sdsd4s3d2s12dsM tdsd18sdsd4s3d2s12dsM
+PART match <div class="text clear" id="contentText"> Ms6ds1ds3d2tds1d1s1d21s5ds3ds2d7s1d2fds1dtds2d28tds1d2sd7sd61tdsd18sdsd4s5d2s12dsM s4ds3ds2d7s1d2fds1dtds2d28tds1d2sd5sd20sd61tdsd18sdsd4s5d2s12dsM
+PART match <div class="text clear" id="contentText"> Ms6ds1ds3d2tds1d1s1d26s4ds3ds2d6s1d2fds1dtds2d28tds1d2sd5sd20sd61tdsd18sdsd4s3d2s12dsM s4ds3ds2d7s1d2fds1dtds2d28tds1d2sd5sd20sd61tdsd18sdsd4s5d2s12dsM
+
+
 @2.获取文件夹大小，即遍历文件夹，将所有文件大小加和。遍历文件夹使用os.walk函数
 import os  
 from os.path import join, getsize  
