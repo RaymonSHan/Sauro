@@ -493,6 +493,50 @@ java callback
 http://blog.csdn.net/allen_zhao_2012/article/details/8056665
 
 
+
+!!! <div> 1 http://stock.sohu.com/20150914/n421044804.shtml ????? <div> order is different
+<div class=\"rc\"> 1  http://stock.sohu.com/s2014/guirenniao/ Intro for CEO
+!! <div class=\"righttext\"> 1 http://stock.sohu.com/s2013/caijin28/ subject
+<div id=\"ozoom\" style=\"ZOOM: 100%\"> 1 http://stock.sohu.com/20081021/n260145271.shtml news for 2008
+<div style=\"text-align: left;\" align=\"center\"> 1 http://stock.sohu.com/20110811/n316091636.shtml news for 2011
+<div class=\"cont\"> 1 http://stock.sohu.com/s2011/adc/index.shtml subject
+<div style=\"TEXT-JUSTIFY: inter-ideograph; TEXT-ALIGN: left\"> 1 http://stock.sohu.com/20120208/n334078864.shtml maybe ok
+<div class=\"pictext\" id=\"picText\"> 1 http://pic.stock.sohu.com/group-381653.shtml pic and text
+<div class=\"cut0 Area\"> 1 http://stock.sohu.com/s2009/stock/ s_subject not use
+!!! <div class=\"text-pic\"> 1 http://stock.sohu.com/20150915/n421181505.shtml spec format
+<div class=\"about\"> 2 http://stock.sohu.com/s2012/aibisen/ subject
+<div class=\"box\"> 2 http://q.stock.sohu.com/mac/macdata.shtml macro
+NoDiv 2 http://q.stock.sohu.com/cn,gg,300437,2062856328.shtml sohu error
+<div class=\"text1 area\" style=\"padding-top:110px\"> 3 http://stock.sohu.com/s2013/xiaogangshinian/ pic and text
+<div class=\"mod01\"> 3 http://stock.sohu.com/s2012/haofengchuangyuan/ subject
+<div class=\"content clear\" id=\"contentText\"> 5 http://stock.sohu.com/20090623/n264718719.shtml news for 2009
+<div align=\"center\"> 6 http://q.stock.sohu.com/news/cn/919/601919/4497377.shtml maybe ok
+<div style=\"MARGIN: 0px auto; WIDTH: 950px\" class=\"text1 area\"> 7 http://stock.sohu.com/s2013/shouru/ pic and text
+<div class=\"content_text\"> 12 http://stock.sohu.com/s2013/iporeform/ subject
+!! <div class=\"leftcon\"> 28 http://stock.sohu.com/s2014/6530/s396618558/ http://stock.sohu.com/s2014/6530/s395940153/ subject
+<div class=\"txt\"> 29 http://pic.stock.sohu.com/group-495195.shtml pic and text
+<div id=\"content\"> 37 http://stock.sohu.com/s2013/iporeform/ subject
+<div class=\"BIZ_itemA_content\"> 47 http://q.stock.sohu.com/cn/002500/jyqk.shtml business
+----------------------------------------------------------------------------------------------------
+<div align=\"left\"> 76 http://stock.sohu.com/20150922/n421857557.shtml maybe ok
+<div id=\"sohu_content\" class=\"article\"> 135 http://stock.sohu.com/20081105/n260446186.shtml news for 2008
+<div class=\"text clear\" id=\"contentText\"> 274 http://stock.sohu.com/20120604/n344725212.shtml news for 2012
+<div class=\"text clear\" id=\"contentText\" collection=\"Y\"> 358 http://stock.sohu.com/20111027/n323640673.shtml news for 2011
+----------------------------------------------------------------------------------------------------
+<div class=\"news_content\"> 668 http://q.stock.sohu.com/news/cn/500/002500/4345153.shtml bulletin
+<div class=\"BIZ_itemB_content\"> 703 http://q.stock.sohu.com/cn/300480/yjyg.shtml bulletin
+<div itemprop=\"articleBody\"> 1476
+<div class=\"news_content content\"> 2963
+<div class=\"part\"> 8380 http://q.stock.sohu.com/cn,gg,601318,2065884227.shtml bulletin
+
+{
+u'<div itemprop="articleBody">': [u'ds1ds3d2tds1d1s1d1', u'sd1s10ds2d', u's1d2fds1dtds2d2tds1d2sd', u'tdsd18sdsd4s3d2s12dsM'], u'<div class="txt">': [u'Ms5d19s2d8sd2', u's2d3s1dsd5sds4d4s1d3sds1ds4dsM'], 
+u'<div class="news_content content">': [u'Msd3fd8tdtd2tdtd2tdtd4tdtdtd6t', u'd2td3td1'], 
+u'<div class="BIZ_itemB_content">': [u'Ms6d3sd2sd3fd6t1d'], 
+u'<div class="text clear" id="contentText">': [u'Ms6ds1ds3d2tds1d1s1d',                                                                 u's4ds3ds2d7s1d2fds1dtds2d28tds1d2sd5sd20sd61tdsd18sdsd4s5d2s12dsM'], 
+u'<div class="part">': [u'Ms6d3sd2sd3fd']}
+
+
 @2.获取文件夹大小，即遍历文件夹，将所有文件大小加和。遍历文件夹使用os.walk函数
 import os  
 from os.path import join, getsize  
@@ -502,5 +546,9 @@ def getdirsize(dir):
    for root, dirs, files in os.walk(dir):  
       size += sum([getsize(join(root, name)) for name in files])  
    return size 
+   
+   
+   
+   
    
    

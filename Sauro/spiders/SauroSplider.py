@@ -18,8 +18,9 @@ GOAL:
 SPLIDER, Get TITLE and CONTENT from Industry Information
 
 ALGORITHM:
-C001   : Get obvious content page
-  V001 : GetObviousContent(response)
+C001   : GetObviousContent
+         Get obvious content page GetObviousContent
+  V001 : GetContentByLength(response)
          Any page within continuous text longer than MIN_TEXT_LEN
 
 C002   : Get fingerprint of given page
@@ -84,11 +85,22 @@ class const:
         self.__dict__[name]=value
 
 
+
 const.MIN_TEXT_LEN             = 180
-const.PAGE_HOME                = '/home/raymon/security/pages_0922-level2/'
+const.MIN_EIGENVALUE_LEN       = 16
+
+# if a kind of fingerprint is too few, omit it, althought it contain long text
+# for my sample with 69626 page, if the kink less 69626/500 = 139, omit it
+# analysis my sample, the number less 47 should omit, greater 669 should remain, so SCALE can be 104 - 1481
+# this value is associate with MIN_TEXT_LEN
+const.OBVIOUS_PAGE_SCALE       = 500
+
 #const.HTML_STRUCT_TAG         = '//div[@*] | //table[@*] | //form[@*] | //script[@*] | //style[@*]'
 const.HTML_STRUCT_TAG          = '//div | //table | //form | //script | //style'
-const.MIN_EIGENVALUE_LEN      = 16
+
+const.PAGE_HOME                = '/home/raymon/security/pages_0922-level2/'
+const.LOG_FILE_L2              = '/home/raymon/security/Saurolog_0922-level2'
+const.LOG_FILE_L3              = '/home/raymon/security/Saurolog_0923-level3'
 
 # create filename by md5 for url, with subdir
 def GetMD5Filename(urlname):
@@ -113,7 +125,7 @@ def CreateSelectorbyURL(urlname):
 # C001V001 : Get obvious content page
 # IN  : Selector object, such as Response
 # OUT : List of <div> tag, which contain text longer than MIN_TEXT_LEN
-def GetObviousContent(response):
+def GetContentByLength(response):
     textdict = []
 # the <script> and <style> and <a> tag are not useful
     for onesign in response.xpath('//*[not(name()="script") and not(name()="style") and not(name()="a")]'):
@@ -188,9 +200,9 @@ def DivideByEigenvalue(eigenlist, totallist):
     return withlist, withoutlist
 
 # C003V001 : Get eigenvalue from fingerprint
-# IN  : strlist[]   : List of string to generate fingerprint
-#       otherlist[] : List of string must not contain fingerprint
-# OUT : List of fingerprint, should longer than MIN_EIGENVALUE_LEN
+# IN  : strlist[]   : List of fingerprint to generate eigenvalue
+#       otherlist[] : List of fingerprint must not contain eigenvalue
+# OUT : List of eigenvalue, should longer than MIN_EIGENVALUE_LEN
 def GetEigenvalueInAll(strlist, otherlist = []):
     firststr = strlist[0]
     returnlist = []
@@ -216,7 +228,8 @@ def GetEigenvalueInAll(strlist, otherlist = []):
 # here means, had find shorter eigenvalue before, but now it miss. 
 # So should add the shorter one as eigenvalue
                 maybekey = firststr[beginpos:endpos-1]
-                if InSubstring(maybekey, otherlist) == -1:
+# althought it not happened, returnlist have no duplicate
+                if InSubstring(maybekey, otherlist) == -1 and InSubstring(maybekey, returnlist) == -1:
                     returnlist.append(maybekey)
                 beginpos = endpos
                 endpos = beginpos + const.MIN_EIGENVALUE_LEN
@@ -231,6 +244,116 @@ def GetEigenvalueInAll(strlist, otherlist = []):
             havechecked = 1
             endpos += 1
     return returnlist
+
+# dict { key : ++count }
+def IncreaseDictCount(resultdict, key, count = 1):
+    try:
+        resultdict[key] += count
+    except KeyError:
+        resultdict[key] = count
+
+def IncreaseDictDictCount(resultdict, key1, key2, count = 1):
+    try:
+        resultdict[key1][key2] += count
+    except KeyError:
+        try:
+            resultdict[key1][key2] = count
+        except KeyError:
+            resultdict[key1] = {}
+            resultdict[key1][key2] = count
+
+def SumDictCount(resultdict):
+    resultsum = 0
+    for onedict in resultdict.keys():
+        resultsum += resultdict[onedict]
+    return resultsum
+
+# Generate eigenvalue from given json file
+# follow C001V001, C002V002, C003V001, only for test, no try except control
+# IN  : json filename, format as following
+# OUT : dict of eigenvalues stringlist, group by <div> tag
+'''
+{
+    "totalresult": [
+        {
+            "url": "http://q.stock.sohu.com/cn/601985/index.shtml",
+            "fingerprint": "Ms1d2fd8tdtd2tdtd2tdtd5tdtdtd7t1d2td3td18sd2td14t2d4td10td1td19sd2td19td2td2td1t1sd3tdtd1s7M",
+            "textdiv": []
+        },
+        {
+            "url": "http://stock.sohu.com/20150922/n421792573.shtml",
+            "fingerprint": "Ms9ds1ds3d2tds1d1s1d13sd17s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM",
+            "textdiv": [
+                "<div itemprop=\"articleBody\">",
+                "<div itemprop=\"articleBody\">"
+            ]
+        },
+        {
+            "url": "http://stock.sohu.com/20150922/n421792716.shtml",
+            "fingerprint": "Ms9ds1ds3d2tds1d1s1d13sd17s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM",
+            "textdiv": [
+                "<div itemprop=\"articleBody\">"
+            ]
+        },
+        {
+            "url": "",
+            "fingerprint": "",
+            "textdiv": []
+        }
+    ]
+}
+'''
+def GenerateEigenvalueFromJson(filename):
+    with open(filename, 'rb') as f:
+        resultlist = JSONDecoder().decode(f.read())['totalresult']
+    eigendict = GenerateEigenvalueFromList(resultlist)
+#    print eigendict
+    pagedict = CollectPageFromEigenvalue(resultlist, eigendict)
+    for onepage in pagedict.keys():
+        print onepage, len(pagedict[onepage]), SumDictCount(pagedict[onepage])
+    return 0
+
+def GenerateEigenvalueFromList(resultlist):
+    eigendictdict = {}
+    returndict = {}
+    for oneresult in resultlist:
+        divnumber = len(oneresult['textdiv'])
+# in json format, there are multi div with same value, but only one need 
+        if divnumber > 1:
+            nodup = []
+            for onediv in oneresult['textdiv']:
+                if not onediv in nodup:
+                    nodup.append(onediv)
+            for onenodup in nodup:
+                IncreaseDictDictCount(eigendictdict, onenodup, oneresult['fingerprint'])
+        elif divnumber == 1:
+            IncreaseDictDictCount(eigendictdict, oneresult['textdiv'][0], oneresult['fingerprint'])
+# now eigendictdict counted the obvious content page group by div and fingerprint
+    resultnuber = len(resultlist)
+    for eigendict in eigendictdict.keys():
+        if resultnuber / SumDictCount(eigendictdict[eigendict]) < const.OBVIOUS_PAGE_SCALE:
+            onelist = GetEigenvalueInAll(eigendictdict[eigendict].keys())
+            if onelist:
+                returndict[eigendict] = onelist
+    return returndict
+
+# select fingerprint with all eigenvalues
+def CollectPageFromEigenvalue(resultlist, eigendict):
+    returndict = {}
+    for onediv in eigendict.keys():
+        returndict[onediv] = {}
+        eigencount = len(eigendict[onediv])
+        for oneresult in resultlist:
+            hitcount = 0
+            for oneeigen in eigendict[onediv]:
+                if oneresult['fingerprint'].find(oneeigen) != -1:
+                    hitcount += 1
+            if hitcount == eigencount:
+                IncreaseDictDictCount(returndict, onediv, oneresult['fingerprint'])
+            elif hitcount != 0:
+                pass
+                #print 'PART match', onediv, oneresult['fingerprint'], oneeigen
+    return returndict    
 
 testlist = '''Ms9ds1ds3d2tds1d1s1d12s2d7sd2td9s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
 Ms9ds1ds3d2tds1d1s1d12s2d7sd2td5s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
@@ -259,20 +382,22 @@ otherlist = ['afdsatdsd18sdsd4s3s1d2fds1dtds2d2tds1d2sdd2s12dsafdsrewr','aserghg
 eigen = ['ds1ds3d2tds1d1s1d1', 's1d2fds1dtds2d2tds1d2sd', 'tdsd18sdsd4s3d2s12ds']
 
 if __name__ == '__main__':
-#    print GetObviousContent(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
+#    print GetContentByLength(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
 #    print GetPageFingerprint(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
 #    print GetEigenvalueInAll(testlist.split('\n'), otherlist)
-    print DivideByEigenvalue(eigen, testlist.split('\n'))
+#    print DivideByEigenvalue(eigen, testlist.split('\n'))
+    print GenerateEigenvalueFromJson(const.LOG_FILE_L2)
+    #print '*' * 80
+    #print GenerateEigenvalueFromJson(const.LOG_FILE_L3)
     
-# ReturnTextDiv -> GetObviousContent
+# ReturnTextDiv -> GetContentByLength
 # ReturnStamp -> GetPageFingerprint
 # MINSTAMP -> MIN_EIGENVALUE_LEN
 # ReturnStampKey
 
 
 const.FILE_HOME = '/home/raymon/security/pages/00/'
-const.LOG_FILE = '/home/raymon/security/Saurolog_0922-level2'
-#const.LOG_FILE = '/home/raymon/security/Saurolog_0923-level3'
+
 
 
 
