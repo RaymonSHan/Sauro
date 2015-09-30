@@ -7,16 +7,19 @@
 
 from SauroCommon import *
 from SauroAlgorithm import *
-
-ALGORITHM = {'GetObviousContent':[GetContentByLength], 'GetPageFingerprint':[GetFingerprintByTagOrder, GetFingerprintByScript]}
+from SauroSetting import *
 
 # use algorithm in GetPageFingerprint
-# return List of all kinds of fingerprint
-def GetPageFingerprint(response):
-	returnlist = []
-	for onealgo in ALGORITHM['GetPageFingerprint']:
-		returnlist.append(onealgo(response))
-	return returnlist
+# return dict of all kinds of fingerprint
+def GetPageFingerprint(response, algorithm = ALGORITHM['GetPageFingerprint']):
+	returndict = {}
+	if response:
+		for onealgo in algorithm:
+			returndict[onealgo.__name__] = onealgo(response)
+	else:
+		for onealgo in algorithm:
+			returndict[onealgo.__name__] = ''
+	return returndict
 
 # test function, generate script fingerprint
 def GenerateMoreFingerprint(fileread, filewrite):
@@ -24,11 +27,10 @@ def GenerateMoreFingerprint(fileread, filewrite):
         totalresult = JSONDecoder().decode(f.read())
 	for oneresult in totalresult['totalresult']:
 		del oneresult['fingerprint']
-		if oneresult['url']:
-			oneresult['fingerprint'] = GetPageFingerprint(CreateSelectorbyURL(oneresult['url']))
+		if oneresult['url'] != '':
+			oneresult.update(GetPageFingerprint(CreateSelectorbyURL(oneresult['url'])))
 		else:
-			oneresult['fingerprint'] = []
-
+			oneresult.update(GetPageFingerprint(''))
 	with open(filewrite, 'wb') as f:
 		f.write(JSONEncoder().encode(totalresult))
 
@@ -65,5 +67,7 @@ if __name__ == '__main__':
 #    print GetEigenvalueInAll(testlist.split('\n'), otherlist)
 #    print DivideByEigenvalue(eigen, testlist.split('\n'))
 #    print GenerateEigenvalueFromJson(const.LOG_FILE_L2)
-#    print GetPageFingerprint(CreateSelectorbyURL('http://q.stock.sohu.com/cn/601058/cwzb.shtml'))
-	GenerateMoreFingerprint('/home/raymon/security/Saurolog_0922-level2', '/home/raymon/security/Saurolog_0929-level2')
+#    print GetPageFingerprint(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'))
+#	 GenerateMoreFingerprint('/home/raymon/security/Saurolog_0922-level2', '/home/raymon/security/Saurolog_0930-level2')
+#    GenerateMoreFingerprint('/home/raymon/security/SauroTest', '/home/raymon/security/SauroWrite')
+	print GenerateEigenvalueFromJson(const.LOG_FILE_L2, 'fingerprint')

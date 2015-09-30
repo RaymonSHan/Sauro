@@ -50,7 +50,6 @@ def CreateSelectorbyFile(filename):
         try:
             sel = Selector(text=f.read().decode('gbk'), type="html")
         except UnicodeDecodeError:
-            print filename
             sel = Selector(text=f.read(), type="html")
     return sel
     

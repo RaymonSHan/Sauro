@@ -5,57 +5,7 @@
 #
 # Wrapping Column 132.
 
-'''
-ORIGIN:
-Sauro is an abbreviation Sauropsida ("lizard faces"). A group of amniotes that includes all existing reptiles and birds and their fossil ancestors, in wiki.
-Sauro use scarpy, a splider framework in python, see http://doc.scrapy.org/. Other prerequisites included XPath, python, lua.
-
-VERSION:
-V0.02  : Sept.28 '15 : first reorgnize, after verified major algorithm.
-V0.01  : Sept. 1 '15 : This is my first python project, from empty
-
-GOAL:
-SPLIDER, Get TITLE and CONTENT from Industry Information
-
-ALGORITHM:
-C001   : Get obvious content page 
-  V001 : GetContentByLength(response)
-         Any page within continuous text longer than MIN_TEXT_LEN
-
-C002   : Get fingerprint of given page
-  V001 : (obsoletes) by division of URL
-  V002 : GetFingerprintByTagOrder(response)
-         by structural tag in html page, as HTML_STRUCT_TAG
-  V003 : GetFingerprintByScript(response)
-         by text length in tag after strip, as SCRIPT_STRUCT_TAG
-
-C003   : Get eigenvalue from fingerprint
-  V001 : GetEigenvalueInAll(strlist, otherlist)
-         For pages with same parent <div> tag of continuous text, get eigenvalues longer than MIN_EIGENVALUE_LEN from fingerprint for these pages, which given in strlist. All eigenvalues must in every strlist, but not in any otherlist.
-  V002 : GetFuzzyEigenvalue(string)
-         by common eigenvalues in all fingerprint
-  V003 :
-         mix C003V001 and C003V002
-
-C004   : Get TITLE and CONTENT and URL, from pages with eigenvalue in fingerprint
-
-L001   : Get obvious list page
-  V001 : Any page contain content page large than MIN_CONTENT_LEN
-
-L002   : Get linked list page, via href in obvious list page
-
-L003   : Get most frequency list page, by detect new content page appear
-
-S001   : Output most frequency list page, by C001, C002, C003, L001, L002, L003
-         This is a splider, only output list page, but not get CONTENT
-
-S002   : Get TITLE and CONTENT by C004 from pages given by S001
-         This is a splider, do major job
-'''
-
 from SauroCommon import *
-
-#ALGORITHM = {'GetObviousContent':GetContentByLength, 'GetPageFingerprint':GetFingerprintByTagOrder}
 
 const.MIN_TEXT_LEN             = 180
 const.MIN_EIGENVALUE_LEN       = 16
@@ -72,6 +22,7 @@ const.SCRIPT_STRUCT_TAG        = '//script | //style'
 
 const.PAGE_HOME                = '/home/raymon/security/pages_0922-level2/'
 const.LOG_FILE_L2              = '/home/raymon/security/Saurolog_0922-level2'
+const.LOG_FILE_L2_1            = '/home/raymon/security/Saurolog_0930-level2'
 const.LOG_FILE_L3              = '/home/raymon/security/Saurolog_0923-level3'
 
 # C001V001 : Get obvious content page
@@ -218,17 +169,17 @@ def GetEigenvalueInAll(strlist, otherlist = []):
     ]
 }
 '''
-def GenerateEigenvalueFromJson(filename):
+def GenerateEigenvalueFromJson(filename, fingerprint):
     with open(filename, 'rb') as f:
         totalresult = JSONDecoder().decode(f.read())['totalresult']
-    eigendict = GenerateEigenvalueFromList(totalresult)
+    eigendict = GenerateEigenvalueFromList(totalresult, fingerprint)
 #    print eigendict
-    pagedict = CollectPageFromEigenvalue(totalresult, eigendict)
+    pagedict = CollectPageFromEigenvalue(totalresult, eigendict, fingerprint)
     for onepage in pagedict.keys():
         print onepage, len(pagedict[onepage]), SumDictCount(pagedict[onepage])
     return 0
 
-def GenerateEigenvalueFromList(resultlist):
+def GenerateEigenvalueFromList(resultlist, fingerprint):
     eigendictdict = {}
     returndict = {}
     for oneresult in resultlist:
@@ -240,9 +191,9 @@ def GenerateEigenvalueFromList(resultlist):
                 if not onediv in nodup:
                     nodup.append(onediv)
             for onenodup in nodup:
-                IncreaseDictDictCount(eigendictdict, onenodup, oneresult['fingerprint'])
+                IncreaseDictDictCount(eigendictdict, onenodup, oneresult[fingerprint])
         elif divnumber == 1:
-            IncreaseDictDictCount(eigendictdict, oneresult['textdiv'][0], oneresult['fingerprint'])
+            IncreaseDictDictCount(eigendictdict, oneresult['textdiv'][0], oneresult[fingerprint])
 # now eigendictdict counted the obvious content page group by div and fingerprint
     resultnuber = len(resultlist)
     for eigendict in eigendictdict.keys():
@@ -253,7 +204,7 @@ def GenerateEigenvalueFromList(resultlist):
     return returndict
 
 # select fingerprint with all eigenvalues
-def CollectPageFromEigenvalue(resultlist, eigendict):
+def CollectPageFromEigenvalue(resultlist, eigendict, fingerprint):
     returndict = {}
     for onediv in eigendict.keys():
         returndict[onediv] = {}
@@ -261,10 +212,10 @@ def CollectPageFromEigenvalue(resultlist, eigendict):
         for oneresult in resultlist:
             hitcount = 0
             for oneeigen in eigendict[onediv]:
-                if oneresult['fingerprint'].find(oneeigen) != -1:
+                if oneresult[fingerprint].find(oneeigen) != -1:
                     hitcount += 1
             if hitcount == eigencount:
-                IncreaseDictDictCount(returndict, onediv, oneresult['fingerprint'])
+                IncreaseDictDictCount(returndict, onediv, oneresult[fingerprint])
             elif hitcount != 0:
                 pass
                 #print 'PART match', onediv, oneresult['fingerprint'], oneeigen
