@@ -109,3 +109,23 @@ def SumDictCount(resultdict):
     for onedict in resultdict.keys():
         resultsum += resultdict[onedict]
     return resultsum
+
+# whether the given fingerprint have a list of eigen
+# IN  : fingerprint
+#     : eigenlistlist
+# OUT : the order in eigenlistlist, or -1 for not found
+def FingerprintHaveEigenvalue(fingerprint, eigenlistlist):
+    order = 0
+    for eigenlist in eigenlistlist:
+        hitall = True
+        for oneeigen in eigenlist:
+            if fingerprint.find(oneeigen) == -1:
+                hitall = False
+                break
+        if hitall: return order
+    return -1
+                
+    
+    
+    
+    

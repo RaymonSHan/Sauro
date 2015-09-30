@@ -134,10 +134,56 @@ def GetEigenvalueInAll(strlist, otherlist = []):
             endpos += 1
     return returnlist
 
-# Generate eigenvalue from given json file
+# part of S002V001
+def GenerateEigenvalueFromList(resultlist, fingerprint, algroithm):
+    eigendictdict = {}
+    returndict = {}
+    for oneresult in resultlist:
+        divnumber = len(oneresult['textdiv'])
+# in json format, there are multi div with same value, but only one need 
+        if divnumber > 1:
+            nodup = []
+            for onediv in oneresult['textdiv']:
+                if not onediv in nodup:
+                    nodup.append(onediv)
+            for onenodup in nodup:
+                IncreaseDictDictCount(eigendictdict, onenodup, oneresult[fingerprint])
+        elif divnumber == 1:
+            IncreaseDictDictCount(eigendictdict, oneresult['textdiv'][0], oneresult[fingerprint])
+# now eigendictdict counted the obvious content page group by div and fingerprint
+    resultnuber = len(resultlist)
+    for eigendict in eigendictdict.keys():
+        if resultnuber / SumDictCount(eigendictdict[eigendict]) < const.OBVIOUS_PAGE_SCALE:
+            #onelist = GetEigenvalueInAll(eigendictdict[eigendict].keys())
+            onelist = algroithm(eigendictdict[eigendict].keys())        # change to function pointer
+            if onelist:
+                returndict[eigendict] = onelist
+    return returndict
+
+# select fingerprint with all eigenvalues
+# test use, only in test result in list
+def CollectPageFromEigenvalue(resultlist, eigendict, fingerprint):
+    returndict = {}
+    for onediv in eigendict.keys():
+        returndict[onediv] = {}
+        eigencount = len(eigendict[onediv])
+        for oneresult in resultlist:
+            hitcount = 0
+            for oneeigen in eigendict[onediv]:
+                if oneresult[fingerprint].find(oneeigen) != -1:
+                    hitcount += 1
+            if hitcount == eigencount:
+                IncreaseDictDictCount(returndict, onediv, oneresult[fingerprint])
+            elif hitcount != 0:
+                pass
+                #print 'PART match', onediv, oneresult['fingerprint'], oneeigen
+    return returndict 
+
+# Generate eigenvalue from given json file, the 'fingerprint' may be others
 # follow C001V001, C002V002, C003V001, only for test, no try except control
 # IN  : json filename, format as following
 # OUT : dict of eigenvalues stringlist, group by <div> tag
+# test use, for test function via json file
 '''
 {
     "totalresult": [
@@ -169,57 +215,18 @@ def GetEigenvalueInAll(strlist, otherlist = []):
     ]
 }
 '''
-def GenerateEigenvalueFromJson(filename, fingerprint):
+# NOT use now, use GenerateRuleViaJson
+def GenerateEigenvalueFromJson(filename, fingerprint, algroithm):
     with open(filename, 'rb') as f:
         totalresult = JSONDecoder().decode(f.read())['totalresult']
-    eigendict = GenerateEigenvalueFromList(totalresult, fingerprint)
+    eigendict = GenerateEigenvalueFromList(totalresult, fingerprint, algroithm)
 #    print eigendict
     pagedict = CollectPageFromEigenvalue(totalresult, eigendict, fingerprint)
     for onepage in pagedict.keys():
         print onepage, len(pagedict[onepage]), SumDictCount(pagedict[onepage])
     return 0
 
-def GenerateEigenvalueFromList(resultlist, fingerprint):
-    eigendictdict = {}
-    returndict = {}
-    for oneresult in resultlist:
-        divnumber = len(oneresult['textdiv'])
-# in json format, there are multi div with same value, but only one need 
-        if divnumber > 1:
-            nodup = []
-            for onediv in oneresult['textdiv']:
-                if not onediv in nodup:
-                    nodup.append(onediv)
-            for onenodup in nodup:
-                IncreaseDictDictCount(eigendictdict, onenodup, oneresult[fingerprint])
-        elif divnumber == 1:
-            IncreaseDictDictCount(eigendictdict, oneresult['textdiv'][0], oneresult[fingerprint])
-# now eigendictdict counted the obvious content page group by div and fingerprint
-    resultnuber = len(resultlist)
-    for eigendict in eigendictdict.keys():
-        if resultnuber / SumDictCount(eigendictdict[eigendict]) < const.OBVIOUS_PAGE_SCALE:
-            onelist = GetEigenvalueInAll(eigendictdict[eigendict].keys())
-            if onelist:
-                returndict[eigendict] = onelist
-    return returndict
 
-# select fingerprint with all eigenvalues
-def CollectPageFromEigenvalue(resultlist, eigendict, fingerprint):
-    returndict = {}
-    for onediv in eigendict.keys():
-        returndict[onediv] = {}
-        eigencount = len(eigendict[onediv])
-        for oneresult in resultlist:
-            hitcount = 0
-            for oneeigen in eigendict[onediv]:
-                if oneresult[fingerprint].find(oneeigen) != -1:
-                    hitcount += 1
-            if hitcount == eigencount:
-                IncreaseDictDictCount(returndict, onediv, oneresult[fingerprint])
-            elif hitcount != 0:
-                pass
-                #print 'PART match', onediv, oneresult['fingerprint'], oneeigen
-    return returndict    
 
 # ReturnTextDiv -> GetContentByLength
 # ReturnStamp -> GetFingerprintByTagOrder
@@ -416,18 +423,6 @@ def ReturnStringTotalLenght(totalstring):                   # totalstring is []
         totallength += len(onestring)
     return totallength    
 
-def IsContentPage(page, realkeylist):                      # realkey is [[str,str][str][str,str]]
-    order = 0
-    for onekeylist in realkeylist:
-        hitonelist = True
-        for onekey in onekeylist:
-            if page.find(onekey) == -1:
-                hitonelist = False
-                break
-        if hitonelist:
-            return order
-        order += 1
-    return -1
 
 const.JAVAFUNC = 'javafunc'
 const.HREFFUNC = 'hreffunc'

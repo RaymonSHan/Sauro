@@ -18,18 +18,18 @@ GOAL:
 SPLIDER, Get TITLE and CONTENT from Industry Information
 
 ALGORITHM:
-C001   : Get obvious content page 
+C001   : Get obvious content page : GetObviousContent()
   V001 : GetContentByLength(response)
          Any page within continuous text longer than MIN_TEXT_LEN
 
-C002   : Get fingerprint of given page
+C002   : Get fingerprint of given page : GetPageFingerprint()
   V001 : (obsoletes) by division of URL
   V002 : GetFingerprintByTagOrder(response)
          by structural tag in html page, as HTML_STRUCT_TAG
   V003 : GetFingerprintByScript(response)
          by text length in tag after strip, as SCRIPT_STRUCT_TAG
 
-C003   : Get eigenvalue from fingerprint
+C003   : Get eigenvalue from fingerprint : GenerateEigenvalue()
   V001 : GetEigenvalueInAll(strlist, otherlist)
          For pages with same parent <div> tag of continuous text, get eigenvalues longer than MIN_EIGENVALUE_LEN from fingerprint for these pages, which given in strlist. All eigenvalues must in every strlist, but not in any otherlist.
   V002 : GetFuzzyEigenvalue(string)
@@ -48,8 +48,13 @@ L003   : Get most frequency list page, by detect new content page appear
 
 S001   : Output most frequency list page, by C001, C002, C003, L001, L002, L003
          This is a splider, only output list page, but not get CONTENT
+         
+S002   : Generate rules for sites from json
+         This is a program, input and output are both json files
+  V001 : GenerateRuleViaJson()
+         use C003 and format it
 
-S002   : Get TITLE and CONTENT by C004 from pages given by S001
+S003   : Get TITLE and CONTENT by C004 from pages given by S001
          This is a splider, do major job
 '''
 from SauroAlgorithm import *
@@ -58,5 +63,12 @@ ALGORITHM = {
 #	'GetURL'				       : [GetURLinResponse],
 #	'GetURL'				      : GetURLinJSONFile,
 	'GetObviousContent'		: GetContentByLength, 
-	'GetPageFingerprint'	: [GetFingerprintByTagOrder, GetFingerprintByScript]
+	'GetPageFingerprint'	: [GetFingerprintByTagOrder, GetFingerprintByScript],
+  'GenerateEigenvalue'  : GetEigenvalueInAll
+}
+
+RULE = {
+  'stock.sohu.com'      : {
+    
+  }
 }
