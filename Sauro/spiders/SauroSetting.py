@@ -59,16 +59,29 @@ S003   : Get TITLE and CONTENT by C004 from pages given by S001
 '''
 from SauroAlgorithm import *
 
+
+# JSON field in page result file
+pTOTALRESULT                  = 'totalresult'
+pSITENAME                     = 'sitename'
+pTEXTDIV                      = 'textdiv'
+
+# JSON field in rule file
+rSITENAME                     = 'sitename'
+
 ALGORITHM = {
-#	'GetURL'				       : [GetURLinResponse],
-#	'GetURL'				      : GetURLinJSONFile,
-	'GetObviousContent'		: GetContentByLength, 
-	'GetPageFingerprint'	: [GetFingerprintByTagOrder, GetFingerprintByScript],
-  'GenerateEigenvalue'  : GetEigenvalueInAll
+#	'GetURL'				            : GetURLinResponse,
+#	'GetURL'				            : GetURLinJSONFile,
+	'GetObviousContent'		      : GetContentByLength, 
+	'GetPageFingerprint'	      : [GetFingerprintByTagOrder, GetFingerprintByScript],
+  'GenerateEigenvalue'        : GetEigenvalueInAll,
+  
+  'GetFingerprintByTagOrder'  : GetFingerprintByTagOrder,
+  'GetFingerprintByScript'    : GetFingerprintByScript,
 }
 
 RULE = {
-  'stock.sohu.com'      : {
+  'stock.sohu.com'            : {
     
   }
 }
+

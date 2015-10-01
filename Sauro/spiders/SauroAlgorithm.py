@@ -11,7 +11,7 @@ const.MIN_TEXT_LEN             = 180
 const.MIN_EIGENVALUE_LEN       = 16
 
 # if a kind of fingerprint is too few, omit it, althought it contain long text
-# for my sample with 69626 page, if the kink less 69626/500 = 139, omit it
+# for my sample with 69626 page, if the kind number less 69626/500 = 139, omit it
 # analysis my sample, the number less 47 should omit, greater 669 should remain, so SCALE can be 104 - 1481
 # this value is associate with MIN_TEXT_LEN
 const.OBVIOUS_PAGE_SCALE       = 500
@@ -134,32 +134,6 @@ def GetEigenvalueInAll(strlist, otherlist = []):
             endpos += 1
     return returnlist
 
-# part of S002V001
-def GenerateEigenvalueFromList(resultlist, fingerprint, algroithm):
-    eigendictdict = {}
-    returndict = {}
-    for oneresult in resultlist:
-        divnumber = len(oneresult['textdiv'])
-# in json format, there are multi div with same value, but only one need 
-        if divnumber > 1:
-            nodup = []
-            for onediv in oneresult['textdiv']:
-                if not onediv in nodup:
-                    nodup.append(onediv)
-            for onenodup in nodup:
-                IncreaseDictDictCount(eigendictdict, onenodup, oneresult[fingerprint])
-        elif divnumber == 1:
-            IncreaseDictDictCount(eigendictdict, oneresult['textdiv'][0], oneresult[fingerprint])
-# now eigendictdict counted the obvious content page group by div and fingerprint
-    resultnuber = len(resultlist)
-    for eigendict in eigendictdict.keys():
-        if resultnuber / SumDictCount(eigendictdict[eigendict]) < const.OBVIOUS_PAGE_SCALE:
-            #onelist = GetEigenvalueInAll(eigendictdict[eigendict].keys())
-            onelist = algroithm(eigendictdict[eigendict].keys())        # change to function pointer
-            if onelist:
-                returndict[eigendict] = onelist
-    return returndict
-
 # select fingerprint with all eigenvalues
 # test use, only in test result in list
 def CollectPageFromEigenvalue(resultlist, eigendict, fingerprint):
@@ -218,7 +192,7 @@ def CollectPageFromEigenvalue(resultlist, eigendict, fingerprint):
 # NOT use now, use GenerateRuleViaJson
 def GenerateEigenvalueFromJson(filename, fingerprint, algroithm):
     with open(filename, 'rb') as f:
-        totalresult = JSONDecoder().decode(f.read())['totalresult']
+        totalresult = JSONDecoder().decode(f.read())[pTOTALRESULT]
     eigendict = GenerateEigenvalueFromList(totalresult, fingerprint, algroithm)
 #    print eigendict
     pagedict = CollectPageFromEigenvalue(totalresult, eigendict, fingerprint)

@@ -110,22 +110,29 @@ def SumDictCount(resultdict):
         resultsum += resultdict[onedict]
     return resultsum
 
-# whether the given fingerprint have a list of eigen
+# whether the given fingerprint have a list of eigen in eigendict
+# used in IsContentPage
 # IN  : fingerprint
-#     : eigenlistlist
-# OUT : the order in eigenlistlist, or -1 for not found
-def FingerprintHaveEigenvalue(fingerprint, eigenlistlist):
-    order = 0
-    for eigenlist in eigenlistlist:
+#     : eigendictlist
+# OUT : the match list, maybe multi result, maybe empty
+def FingerprintHaveEigenvalue(fingerprint, eigendictlist):
+    returnlist = []
+    for eigenkey in eigendictlist.keys():
         hitall = True
-        for oneeigen in eigenlist:
+        for oneeigen in eigendictlist[eigenkey]:
             if fingerprint.find(oneeigen) == -1:
                 hitall = False
                 break
-        if hitall: return order
-    return -1
+        if hitall:
+            returnlist.append(eigenkey)
+    return returnlist
                 
     
-    
-    
+ # remove dup in list
+def RemoveDuplicateFromList(inputlist):
+    returnlist = []
+    for onelist in inputlist:
+        if not onelist in returnlist:
+            returnlist.append(onelist)
+    return returnlist
     
