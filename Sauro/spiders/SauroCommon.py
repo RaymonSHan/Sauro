@@ -109,6 +109,14 @@ def SumDictCount(resultdict):
     for onedict in resultdict.keys():
         resultsum += resultdict[onedict]
     return resultsum
+   
+# remove dup in list
+def RemoveDuplicateFromList(inputlist):
+    returnlist = []
+    for onelist in inputlist:
+        if not onelist in returnlist:
+            returnlist.append(onelist)
+    return returnlist
 
 # whether the given fingerprint have a list of eigen in eigendict
 # used in IsContentPage
@@ -126,13 +134,16 @@ def FingerprintHaveEigenvalue(fingerprint, eigendictlist):
         if hitall:
             returnlist.append(eigenkey)
     return returnlist
-                
-    
- # remove dup in list
-def RemoveDuplicateFromList(inputlist):
-    returnlist = []
-    for onelist in inputlist:
-        if not onelist in returnlist:
-            returnlist.append(onelist)
-    return returnlist
-    
+
+# generate dict by run each algorithm in list, with the name as the algorithm name
+def GenerateDictByAlgorithmList(response, algorithmlist, otherpara=None):
+    returndict = {}
+    if response:
+        for onealgo in algorithmlist:
+            returndict[onealgo.__name__] = onealgo(response, otherpara)
+    else:
+        for onealgo in algorithmlist:
+			returndict[onealgo.__name__] = ''
+    return returndict
+
+####################################################################################################################################

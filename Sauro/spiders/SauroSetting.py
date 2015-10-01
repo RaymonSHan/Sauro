@@ -37,7 +37,9 @@ C003   : Get eigenvalue from fingerprint : GenerateEigenvalue()
   V003 :
          mix C003V001 and C003V002
 
-C004   : Get TITLE and CONTENT and URL, from pages with eigenvalue in fingerprint
+C004   : Get page items, from pages with eigenvalue in fingerprint
+  V001 : GetPageItmes()
+       : 
 
 L001   : Get obvious list page
   V001 : Any page contain content page large than MIN_CONTENT_LEN
@@ -72,12 +74,19 @@ ALGORITHM = {
 #	'GetURL'				            : GetURLinResponse,
 #	'GetURL'				            : GetURLinJSONFile,
 	'GetObviousContent'		      : GetContentByLength, 
-	'GetPageFingerprint'	      : [GetFingerprintByTagOrder, GetFingerprintByScript],
-  'GenerateEigenvalue'        : GetEigenvalueInAll,
   
+	'GetPageFingerprint'	      : [GetFingerprintByTagOrder, GetFingerprintByScript],
   'GetFingerprintByTagOrder'  : GetFingerprintByTagOrder,
   'GetFingerprintByScript'    : GetFingerprintByScript,
+  
+  'GenerateEigenvalue'        : GetEigenvalueInAll,
+  
+  'GetPageItems'              : [GetTitleByTag, GetContentByDiv],
+  'GetTitleByTag'             : GetTitleByTag,
+  'GetContentByDiv'           : GetContentByDiv,  
 }
+
+####################################################################################################################################
 
 RULE = {
   'stock.sohu.com'            : {

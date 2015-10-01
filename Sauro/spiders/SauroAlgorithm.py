@@ -53,7 +53,7 @@ def GetContentByLength(response):
 # OUT : string of page fingerprint
 #
 # the sequence <script><div><div><div><table><table><div><script><script> return MSD2T1DS1M
-def GetFingerprintByTagOrder(response):
+def GetFingerprintByTagOrder(response, otherpara):
     lastname = ''
     thisname = ''
     lastnum = 0
@@ -81,7 +81,7 @@ def GetFingerprintByTagOrder(response):
 # OUT : string of page fingerprint
 #
 # return the length for tag in SCRIPT_STRUCT_TAG
-def GetFingerprintByScript(response):
+def GetFingerprintByScript(response, otherpara):
     returnfinger = 'L'
     for onetag in response.xpath(const.SCRIPT_STRUCT_TAG):
         returnfinger += str(len(onetag.extract().strip()))
@@ -134,6 +134,50 @@ def GetEigenvalueInAll(strlist, otherlist = []):
             endpos += 1
     return returnlist
 
+# return title by <title> tag of response
+def GetTitleByTag(response, otherpara):
+    return response.xpath('//title/text()')[0].extract()
+
+# otherpara is List of div part
+# used Oct. 01 '15
+def GetContentByDiv(response, otherpara):
+# this is ok #######################################################################################################################
+#    for onetext in response.xpath('//div[@itemprop="articleBody"]/text() | //div[@itemprop="articleBody"]/*[not(name()="div")]/descendant-or-self::text()'):
+#        print onetext.extract().encode('utf-8');
+# this is ok #######################################################################################################################
+    return onetext
+    
+    
+#        for sel in response.xpath('//div[@class="muLink"]/parent::*'):
+#            print sel.extract().encode('utf-8')
+#            print ('-' * 20)
+        #article = articleList.xpath('string(./p)')[0]
+        #sel = articleList.xpath('string(//p)')
+        #print article.extract().encode('utf-8')
+        #for sel in articleList.xpath('string(//p)'):
+        #    print sel.extract()
+        #print articleList[0].extract()
+
+#         for article in response.xpath('//div[@itemprop="articleBody"]/descendant-or-self::*[not(@class="muLink")]'):
+# ancestor
+
+#        for article in response.xpath('//div[@itemprop="articleBody"]//text()'):
+#        for article in response.xpath('//div[@itemprop="articleBody"]/descendant-or-self::text()'):
+
+#        articleList = response.xpath('//div[@itemprop="articleBody"]')
+#        article = articleList.xpath('string(.)')[0].extract()
+#        print article.encode('utf-8')
+
+#        for article in response.xpath('//div[@itemprop="articleBody"]/*[not(name()="div")]/descendant-or-self::text()'):         // no direct, no div
+#        for article in response.xpath('//div[@itemprop="articleBody"]/descendant-or-self::*[not(@class="muLink")]/text()'):      // all
+#        for article in response.xpath('string(//div[@itemprop="articleBody"])'):                                                 // all
+#        for article in response.xpath('//div[@itemprop="articleBody"]/text() | //div[@itemprop="articleBody"]/*[not(name()="div")]/descendant-or-self::text()'):    // OK\
+
+
+#        for article in response.xpath('//div[@itemprop="articleBody"]/not(descendant-or-self::*(@class="muLink"))'):     *[@class="muLink"]
+#        for article in response.xpath('string(//div[@itemprop="articleBody"]/p[2])'):
+    
+####################################################################################################################################
 # select fingerprint with all eigenvalues
 # test use, only in test result in list
 def CollectPageFromEigenvalue(resultlist, eigendict, fingerprint):
