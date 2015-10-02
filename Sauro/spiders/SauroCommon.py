@@ -46,11 +46,12 @@ def GetMD5Filename(urlname):
 def CreateSelectorbyFile(filename):
     sel = None
     with open(filename, 'rb') as f:
+        filebody = f.read()
         # gbk -> unicode # should remove later
         try:
-            sel = Selector(text=f.read().decode('gbk'), type="html")
+            sel = Selector(text=filebody.decode('gbk'), type="html")
         except UnicodeDecodeError:
-            sel = Selector(text=f.read(), type="html")
+            sel = Selector(text=filebody, type="html")
     return sel
     
 def CreateSelectorbyString(string):

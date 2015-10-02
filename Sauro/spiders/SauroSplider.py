@@ -119,16 +119,27 @@ if __name__ == '__main__':
 #    print GetContentByLength(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
 #    print GetFingerprintByTagOrder(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'))
 #    print GetEigenvalueInAll(testlist.split('\n'), otherlist)
+
 #    print DivideByEigenvalue(eigen, testlist.split('\n'))
 #    print GenerateEigenvalueFromJson(const.LOG_FILE_L2)
 #    print GetPageFingerprint(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'))
+
 #	 GenerateMoreFingerprint('/home/raymon/security/Saurolog_0922-level2', '/home/raymon/security/Saurolog_0930-level2')
 #    GenerateMoreFingerprint('/home/raymon/security/SauroTest', '/home/raymon/security/SauroWrite')
-#	print GenerateEigenvalueFromJson(const.LOG_FILE_L2_1, 'GetFingerprintByScript', GetEigenvalueInAll)
-#	print GenerateRuleViaJson(const.LOG_FILE_L2_1, None)		# now for eigenvalue
+
+#	 print GenerateEigenvalueFromJson(const.LOG_FILE_L2_1, 'GetFingerprintByScript', GetEigenvalueInAll)
+#	 print GenerateRuleViaJson(const.LOG_FILE_L2_1, None)		# now for eigenvalue
+
     title = GetTitleByTag(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), None)
     print title.encode('utf-8')
     GetContentByDiv(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'),['<div itemprop="articleBody">'])
+    
 #    returndict = GenerateRuleViaJson(const.LOG_FILE_L2_1, None)
 #    pagediv = IsContentPage(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), returndict)
 #    print GetPageItems(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), pagediv)
+
+'''
+useful
+response = response.replace(body=response.body.replace('<br />', '\n')) 
+hxs = HtmlXPathSelector(response)
+'''

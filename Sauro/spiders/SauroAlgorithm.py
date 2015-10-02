@@ -141,9 +141,26 @@ def GetTitleByTag(response, otherpara):
 # otherpara is List of div part
 # used Oct. 01 '15
 def GetContentByDiv(response, otherpara):
+    returnstring = ''
+    rawhtml = response.xpath('//div[@itemprop="articleBody"]')[0].extract()
+    rawhtml = rawhtml.replace('\n', '').replace('\r', '').replace('</p>', '').replace('<p>', '\r\n').replace('<br />', '\r\n')
+
+    
+    responseindiv = CreateSelectorbyString(rawhtml)
+    print responseindiv.extract()
+    return
+    for onetext in responseindiv.xpath('text()'):
+        returnstring += onetext.extract()
+    print returnstring.encode('utf-8');       
+    
+    return
+    
+    
+    
 # this is ok #######################################################################################################################
-#    for onetext in response.xpath('//div[@itemprop="articleBody"]/text() | //div[@itemprop="articleBody"]/*[not(name()="div")]/descendant-or-self::text()'):
-#        print onetext.extract().encode('utf-8');
+    for onetext in response.xpath('//div[@itemprop="articleBody"]/text() | //div[@itemprop="articleBody"]/*[not(name()="div")]/descendant-or-self::text()'):
+        returnstring += onetext.extract()
+    print returnstring.encode('utf-8');
 # this is ok #######################################################################################################################
     return onetext
     
