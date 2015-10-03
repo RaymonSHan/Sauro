@@ -6,6 +6,7 @@
 # Wrapping Column 132.
 
 from SauroCommon import *
+from SauroXpath import *
 
 const.MIN_TEXT_LEN             = 180
 const.MIN_EIGENVALUE_LEN       = 16
@@ -145,54 +146,15 @@ def GetContentByDiv(response, otherpara):
     rawhtml = response.xpath('//div[@itemprop="articleBody"]')[0].extract()
     rawhtml = rawhtml.replace('\n', '').replace('\r', '').replace('</p>', '').replace('<p>', '\r\n').replace('<br />', '\r\n')
 
-    
     responseindiv = CreateSelectorbyString(rawhtml)
     print responseindiv.extract()
     return
     for onetext in responseindiv.xpath('text()'):
         returnstring += onetext.extract()
     print returnstring.encode('utf-8');       
-    
     return
-    
-    
-    
-# this is ok #######################################################################################################################
-    for onetext in response.xpath('//div[@itemprop="articleBody"]/text() | //div[@itemprop="articleBody"]/*[not(name()="div")]/descendant-or-self::text()'):
-        returnstring += onetext.extract()
-    print returnstring.encode('utf-8');
-# this is ok #######################################################################################################################
-    return onetext
-    
-    
-#        for sel in response.xpath('//div[@class="muLink"]/parent::*'):
-#            print sel.extract().encode('utf-8')
-#            print ('-' * 20)
-        #article = articleList.xpath('string(./p)')[0]
-        #sel = articleList.xpath('string(//p)')
-        #print article.extract().encode('utf-8')
-        #for sel in articleList.xpath('string(//p)'):
-        #    print sel.extract()
-        #print articleList[0].extract()
-
-#         for article in response.xpath('//div[@itemprop="articleBody"]/descendant-or-self::*[not(@class="muLink")]'):
-# ancestor
-
-#        for article in response.xpath('//div[@itemprop="articleBody"]//text()'):
-#        for article in response.xpath('//div[@itemprop="articleBody"]/descendant-or-self::text()'):
-
-#        articleList = response.xpath('//div[@itemprop="articleBody"]')
-#        article = articleList.xpath('string(.)')[0].extract()
-#        print article.encode('utf-8')
-
-#        for article in response.xpath('//div[@itemprop="articleBody"]/*[not(name()="div")]/descendant-or-self::text()'):         // no direct, no div
-#        for article in response.xpath('//div[@itemprop="articleBody"]/descendant-or-self::*[not(@class="muLink")]/text()'):      // all
-#        for article in response.xpath('string(//div[@itemprop="articleBody"])'):                                                 // all
-#        for article in response.xpath('//div[@itemprop="articleBody"]/text() | //div[@itemprop="articleBody"]/*[not(name()="div")]/descendant-or-self::text()'):    // OK\
 
 
-#        for article in response.xpath('//div[@itemprop="articleBody"]/not(descendant-or-self::*(@class="muLink"))'):     *[@class="muLink"]
-#        for article in response.xpath('string(//div[@itemprop="articleBody"]/p[2])'):
     
 ####################################################################################################################################
 # select fingerprint with all eigenvalues
@@ -261,18 +223,12 @@ def GenerateEigenvalueFromJson(filename, fingerprint, algroithm):
         print onepage, len(pagedict[onepage]), SumDictCount(pagedict[onepage])
     return 0
 
-
-
 # ReturnTextDiv -> GetContentByLength
 # ReturnStamp -> GetFingerprintByTagOrder
 # MINSTAMP -> MIN_EIGENVALUE_LEN
 # ReturnStampKey
 
-
 const.FILE_HOME = '/home/raymon/security/pages/00/'
-
-
-
 
 def ReturnExpr(responseurl):
     spliturl = responseurl.split('/')
@@ -284,8 +240,6 @@ def ReturnExpr(responseurl):
         if splen > 0:
             retstr += str(splen)
     return retstr
-
-
 
 def GetSingleDiv(onediv):           # not pass yet
     alllength = len(onediv.extract())
@@ -552,9 +506,6 @@ class SauroReadSpider(scrapy.Spider):
             realkey = ReturnStampKey(simstring, None)
             allrule['stock.sohu.com'].append(realkey)
             
-            
-            
-            
             print realkey, returnnumber
             for onestr in simstring:
                 del stamphave[onestr]
@@ -570,7 +521,6 @@ class SauroReadSpider(scrapy.Spider):
         print totalnumber
         return           
             
-            
         maxlength = ReturnStringMaxLenght(simstring)
         minlength = ReturnStringMinLenght(simstring)
         totallength = ReturnStringTotalLenght(realkey)
@@ -581,8 +531,6 @@ class SauroReadSpider(scrapy.Spider):
         minrate = float(totallength) / minlength
         print minrate, maxrate
         print realkey
-        
-
         
         for (onekey, number) in sortkey:
             print onekey, number, len(onekey)*number*number
@@ -601,14 +549,7 @@ class SauroReadSpider(scrapy.Spider):
         sortkey = sorted(subkey.items(), key=lambda d: len(d[0])*d[1], reverse=False)
         for (onekey, number) in sortkey:
             print onekey, number
-        return
-                    
-       
-        
-        
-        
-        
-        
+        return       
         
         for oneurl in urllist:
             if len(oneurl['textdiv']) != 0:
@@ -625,9 +566,7 @@ class SauroReadSpider(scrapy.Spider):
         for (onekey, number) in sortstamp:
             print onekey, number
         return     
-                
-
-        
+         
         for onediv in stamphave:
             sortdiv = sorted(stamphave[onediv], key=lambda d: d[0], reverse=False)
             print onediv

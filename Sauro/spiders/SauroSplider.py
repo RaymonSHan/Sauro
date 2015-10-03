@@ -114,6 +114,7 @@ s1d2fds1dtds2d2tds1d2sdadsragdgtdsd18sdsd4s3d2s12ds'''
 
 otherlist = ['afdsatdsd18sdsd4s3s1d2fds1dtds2d2tds1d2sdd2s12dsafdsrewr','aserghgfhthtr']
 eigen = ['ds1ds3d2tds1d1s1d1', 's1d2fds1dtds2d2tds1d2sd', 'tdsd18sdsd4s3d2s12ds']
+excludetaglist = ['div', 'script', 'style']
 
 if __name__ == '__main__':
 #    print GetContentByLength(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
@@ -130,9 +131,11 @@ if __name__ == '__main__':
 #	 print GenerateEigenvalueFromJson(const.LOG_FILE_L2_1, 'GetFingerprintByScript', GetEigenvalueInAll)
 #	 print GenerateRuleViaJson(const.LOG_FILE_L2_1, None)		# now for eigenvalue
 
-    title = GetTitleByTag(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), None)
-    print title.encode('utf-8')
-    GetContentByDiv(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'),['<div itemprop="articleBody">'])
+    GetTextInTag(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), excludetaglist)
+    
+    #title = GetTitleByTag(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), None)
+    #print title.encode('utf-8')
+    #GetContentByDiv(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'),['<div itemprop="articleBody">'])
     
 #    returndict = GenerateRuleViaJson(const.LOG_FILE_L2_1, None)
 #    pagediv = IsContentPage(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), returndict)
