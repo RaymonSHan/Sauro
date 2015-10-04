@@ -48,10 +48,8 @@ def CreateSelectorbyFile(filename):
     with open(filename, 'rb') as f:
         filebody = f.read()
         # gbk -> unicode # should remove later
-        try:
-            sel = Selector(text=filebody.decode('gbk'), type="html")
-        except UnicodeDecodeError:
-            sel = Selector(text=filebody, type="html")
+# see https://docs.python.org/2/howto/unicode.html#the-unicode-type        
+        sel = Selector(text=filebody.decode('gbk', 'ignore'), type="html")
     return sel
     
 def CreateSelectorbyString(string):

@@ -50,6 +50,7 @@ def GenerateRuleViaJson(jsonread, jsonwrite, algorithm = ALGORITHM):
     returndict[rSITENAME] = siteurl
     for onealgo in algorithm['GetPageFingerprint']:
         returndict[onealgo.__name__] = GenerateEigenvalueFromList(totalresult, onealgo.__name__, algorithm['GenerateEigenvalue'])
+# should write rule to json, have not do it yet
     return returndict
 
 # part of S003V001
@@ -114,6 +115,34 @@ s1d2fds1dtds2d2tds1d2sdadsragdgtdsd18sdsd4s3d2s12ds'''
 otherlist = ['afdsatdsd18sdsd4s3s1d2fds1dtds2d2tds1d2sdd2s12dsafdsrewr','aserghgfhthtr']
 eigen = ['ds1ds3d2tds1d1s1d1', 's1d2fds1dtds2d2tds1d2sd', 'tdsd18sdsd4s3d2s12ds']
 
+notusedict =
+{"url": "http://stock.sohu.com/20150921/n421671505.shtml", "textdiv": ["<div itemprop=\"articleBody\">"], "GetFingerprintByScript": "L10772144819311255366710321310263112107771077573149112177115325492998456194148295117536657731531101541476491591321308081402115102892482611771831091511230160347121671434973552570261932471513713621041047518386832573242380255104897143133981036219159L", "GetFingerprintByTagOrder": "Ms9ds1ds3d2tds1d1s1d13sd13s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM"}
+# pageattr as notusedict
+def IsContentPageViaFingerprint(pageattr, eigendict, algorithm = ALGORITHM):
+    usedalgo = {}
+    usedeigen = []
+    usedalgo['GetPageFingerprint'] = usedeigen
+# return result use the algorithm both in dict and ALGORITHM    
+    for oneeigen in algorithm['GetPageFingerprint']:
+        if oneeigen.__name__ in eigendict:
+            usedeigen.append(oneeigen)
+    returnfinger = GetPageFingerprint(response, usedalgo)
+    for oneeigen in usedeigen:
+        allreturn = FingerprintHaveEigenvalue(returnfinger[oneeigen.__name__], eigendict[oneeigen.__name__])     
+    return RemoveDuplicateFromList(allreturn)
+
+def TestEigenViaJson(jsonread, algorithm = ALGORITHM):
+    returndict = {}
+    with open(jsonread, 'rb') as f:
+	    alljson = JSONDecoder().decode(f.read())
+    totalresult = alljson[pTOTALRESULT]
+    siteurl = 'stock.sohu.com'							# = alljson[pSITENAME/*'sitename'*/]
+    returndict[rSITENAME] = siteurl
+    for onealgo in algorithm['GetPageFingerprint']:
+        returndict[onealgo.__name__] = GenerateEigenvalueFromList(totalresult, onealgo.__name__, algorithm['GenerateEigenvalue'])
+    return returndict
+    
+
 if __name__ == '__main__':
 #    print GetContentByLength(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
 #    print GetFingerprintByTagOrder(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'))
@@ -121,9 +150,9 @@ if __name__ == '__main__':
 
 #    print DivideByEigenvalue(eigen, testlist.split('\n'))
 #    print GenerateEigenvalueFromJson(const.LOG_FILE_L2)
-#    print GetPageFingerprint(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'))
+#    print GetPageFingerprint(CreateSelectorbyURL('http://q.stock.sohu.com/cn/300108/xjll.shtml'))
 
-#	 GenerateMoreFingerprint('/home/raymon/security/Saurolog_0922-level2', '/home/raymon/security/Saurolog_0930-level2')
+#    GenerateMoreFingerprint('/home/raymon/security/Saurolog_0922-level2', '/home/raymon/security/Saurolog_1004-level2')
 #    GenerateMoreFingerprint('/home/raymon/security/SauroTest', '/home/raymon/security/SauroWrite')
 
 #	 print GenerateEigenvalueFromJson(const.LOG_FILE_L2_1, 'GetFingerprintByScript', GetEigenvalueInAll)
@@ -143,4 +172,7 @@ if __name__ == '__main__':
 ##        pageitems = GetPageItems(response, pagediv)
 ##        for oneitem in pageitems.keys():
 ##            print oneitem, pageitems[oneitem].encode('utf-8')
+
+    returndict = GenerateRuleViaJson(const.LOG_FILE_L2_2, None)
+    print returndict
     print 'OK'

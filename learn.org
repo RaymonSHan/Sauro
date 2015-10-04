@@ -328,6 +328,8 @@ http://blog.chinaunix.net/uid-12720249-id-2918322.html  see more for __getitem__
 
 http://www.cnblogs.com/yuxc/archive/2011/08/07/2130229.html for python in language process 
 
+http://wklken.me/ adv for python, as memory, the best index i have see
+
 def parse_type(self,response, typeid):
     print typeid
 

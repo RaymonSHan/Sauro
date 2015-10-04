@@ -24,6 +24,7 @@ const.SCRIPT_STRUCT_TAG        = '//script | //style'
 const.PAGE_HOME                = '/home/raymon/security/pages_0922-level2/'
 const.LOG_FILE_L2              = '/home/raymon/security/Saurolog_0922-level2'
 const.LOG_FILE_L2_1            = '/home/raymon/security/Saurolog_0930-level2'
+const.LOG_FILE_L2_2            = '/home/raymon/security/Saurolog_1004-level2'
 const.LOG_FILE_L3              = '/home/raymon/security/Saurolog_0923-level3'
 
 # JSON field in page result file
