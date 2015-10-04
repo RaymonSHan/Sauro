@@ -59,38 +59,91 @@ S002   : Generate rules for sites from json
 S003   : Get TITLE and CONTENT by C004 from pages given by S001
          This is a splider, do major job
 '''
+
 from SauroAlgorithm import *
 
+def GetTitle(response, otherpara):
+    return ALGORITHM['GetTitle'](response, otherpara)
 
-# JSON field in page result file
-pTOTALRESULT                  = 'totalresult'
-pSITENAME                     = 'sitename'
-pTEXTDIV                      = 'textdiv'
-
-# JSON field in rule file
-rSITENAME                     = 'sitename'
-
+def GetContent(response, otherpara):
+    return ALGORITHM['GetContent'](response, otherpara)
+    
 ALGORITHM = {
 #	'GetURL'				            : GetURLinResponse,
 #	'GetURL'				            : GetURLinJSONFile,
-	'GetObviousContent'		      : GetContentByLength, 
-  
-	'GetPageFingerprint'	      : [GetFingerprintByTagOrder, GetFingerprintByScript],
-  'GetFingerprintByTagOrder'  : GetFingerprintByTagOrder,
-  'GetFingerprintByScript'    : GetFingerprintByScript,
-  
+  'GetObviousContent'         : GetContentByLength, 
+  'GetPageFingerprint'        : [GetFingerprintByTagOrder, GetFingerprintByScript],
   'GenerateEigenvalue'        : GetEigenvalueInAll,
-  
-  'GetPageItems'              : [GetTitleByTag, GetContentByDiv],
-  'GetTitleByTag'             : GetTitleByTag,
-  'GetContentByDiv'           : GetContentByDiv,  
+
+  'GetPageItems'              : [GetTitle, GetContent],
+  'GetTitle'                  : GetTitleByTag,
+  'GetContent'                : GetContentByDiv,
 }
+
+# List of Cross-reference
+'''
+: IN  : SauroCommon.py
+def GetMD5Filename(urlname):
+def CreateSelectorbyFile(filename):
+def CreateSelectorbyString(string):
+def CreateSelectorbyURL(urlname):
+    SauroCommon : CreateSelectorbyFile()
+    SauroCommon : GetMD5Filename()
+def InSubstring(checkstr, strlist):
+def DivideByEigenvalue(eigenlist, totallist):
+def IncreaseDictCount(resultdict, key, count = 1):
+def IncreaseDictDictCount(resultdict, key1, key2, count = 1):
+def SumDictCount(resultdict):
+def RemoveDuplicateFromList(inputlist):
+def FingerprintHaveEigenvalue(fingerprint, eigendictlist):
+def GenerateDictByAlgorithmList(response, algorithmlist, otherpara=None):
+
+: IN  : SauroXpath.py
+def GetXpathfromTag(tag):
+def GetTextInTag(response, tag, excludetaglist):
+    SauroXpath : GetXpathfromTag()
+
+: IN  : SauroAlgorithm.py
+def GetContentByLength(response):
+def GetFingerprintByTagOrder(response, otherpara):
+def GetFingerprintByScript(response, otherpara):
+def GetEigenvalueInAll(strlist, otherlist = []):
+    SauroCommon : InSubstring()
+def ReturnBestContent(stringlist):
+def GetTitleByTag(response, otherpara):
+def GetContentByDiv(response, otherpara):
+    SauroAlgorithm : ReturnBestContent()
+
+: IN  : SauroSplider.py
+def GetPageFingerprint(response, algorithm = ALGORITHM):
+    SauroCommon : GenerateDictByAlgorithmList()
+def GenerateEigenvalueFromList(resultlist, fingerprint, algroithm):
+    SauroCommon : RemoveDuplicateFromList()
+    SauroCommon : IncreaseDictDictCount()
+    SauroCommon : SumDictCount()
+    SauroAlgorithm : GetEigenvalueInAll()
+def GenerateRuleViaJson(jsonread, jsonwrite, algorithm = ALGORITHM):
+    SauroSplider : GenerateEigenvalueFromList()
+def IsContentPage(response, eigendict, algorithm = ALGORITHM):
+    SauroSplider : GetPageFingerprint()
+    SauroCommon : FingerprintHaveEigenvalue()
+    SauroCommon : RemoveDuplicateFromList()
+def GetPageItems(response, pagediv, algorithm = ALGORITHM):
+    SauroCommon : GenerateDictByAlgorithmList()
+'''
 
 ####################################################################################################################################
 
 RULE = {
   'stock.sohu.com'            : {
-    
   }
 }
 
+'''
+def CollectPageFromEigenvalue(resultlist, eigendict, fingerprint):                  USED
+    SauroCommon : IncreaseDictDictCount()
+def GenerateEigenvalueFromJson(filename, fingerprint, algroithm):                   USED
+    eigendict = GenerateEigenvalueFromList(totalresult, fingerprint, algroithm)
+    pagedict = CollectPageFromEigenvalue(totalresult, eigendict, fingerprint)
+        print onepage, len(pagedict[onepage]), SumDictCount(pagedict[onepage])
+'''

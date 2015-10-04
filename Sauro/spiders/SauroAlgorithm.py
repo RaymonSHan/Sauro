@@ -26,6 +26,17 @@ const.LOG_FILE_L2              = '/home/raymon/security/Saurolog_0922-level2'
 const.LOG_FILE_L2_1            = '/home/raymon/security/Saurolog_0930-level2'
 const.LOG_FILE_L3              = '/home/raymon/security/Saurolog_0923-level3'
 
+# JSON field in page result file
+pTOTALRESULT                  = 'totalresult'
+pSITENAME                     = 'sitename'
+pTEXTDIV                      = 'textdiv'
+
+# JSON field in rule file
+rSITENAME                     = 'sitename'
+
+# used by GetContentByDiv()
+excludetaglist                 = ['div', 'script', 'style']
+
 # C001V001 : Get obvious content page
 # IN  : Selector object, such as Response
 # OUT : List of <div> tag, which contain text longer than MIN_TEXT_LEN
@@ -135,26 +146,35 @@ def GetEigenvalueInAll(strlist, otherlist = []):
             endpos += 1
     return returnlist
 
+# IN  : list of content of page
+# OUT : string for the best match
+# should be modified later, now only return the longest one
+def ReturnBestContent(stringlist):
+    longest = 0
+    nowmatch = ''
+    for onestring in stringlist:
+        nowlength = len(onestring)
+        if nowlength > longest:
+            longest = nowlength
+            nowmatch = onestring
+    return nowmatch
+
 # return title by <title> tag of response
 def GetTitleByTag(response, otherpara):
     return response.xpath('//title/text()')[0].extract()
 
-# otherpara is List of div part
-# used Oct. 01 '15
+# return text content by GetTextInTag, following all tag list in otherpara
+# if otherpara is empty list, it is not a content page, return ''
 def GetContentByDiv(response, otherpara):
-    returnstring = ''
-    rawhtml = response.xpath('//div[@itemprop="articleBody"]')[0].extract()
-    rawhtml = rawhtml.replace('\n', '').replace('\r', '').replace('</p>', '').replace('<p>', '\r\n').replace('<br />', '\r\n')
-
-    responseindiv = CreateSelectorbyString(rawhtml)
-    print responseindiv.extract()
-    return
-    for onetext in responseindiv.xpath('text()'):
-        returnstring += onetext.extract()
-    print returnstring.encode('utf-8');       
-    return
-
-
+    if not otherpara:
+        return ''
+    stringlist = []
+    for onetag in otherpara:
+        stringlist.append(GetTextInTag(response, onetag, excludetaglist))
+    stringcount = len(stringlist)
+    if stringcount == 0: return ''
+    if stringcount == 1: return stringlist[0]
+    return ReturnBestContent(stringlist)
     
 ####################################################################################################################################
 # select fingerprint with all eigenvalues

@@ -55,7 +55,7 @@ def GenerateRuleViaJson(jsonread, jsonwrite, algorithm = ALGORITHM):
 # part of S003V001
 # IN  : response : input page
 #     : eigendict : Return by GenerateRuleViaJson, check eigenvalue both in dict and ALGORITHM
-# OUT : return the div tag for GetGageItem
+# OUT : return the div tag for GetGageItem, if not return []
 def IsContentPage(response, eigendict, algorithm = ALGORITHM):
     usedalgo = {}
     usedeigen = []
@@ -65,11 +65,14 @@ def IsContentPage(response, eigendict, algorithm = ALGORITHM):
         if oneeigen.__name__ in eigendict:
             usedeigen.append(oneeigen)
     returnfinger = GetPageFingerprint(response, usedalgo)
-    
     for oneeigen in usedeigen:
         allreturn = FingerprintHaveEigenvalue(returnfinger[oneeigen.__name__], eigendict[oneeigen.__name__])     
     return RemoveDuplicateFromList(allreturn)
 
+# C004V001 : Get page items, from pages with eigenvalue in fingerprint
+def GetPageItems(response, pagediv, algorithm = ALGORITHM):
+    return GenerateDictByAlgorithmList(response, algorithm['GetPageItems'], pagediv)
+    
 ####################################################################################################################################
 # test function, generate script fingerprint
 # not use now
@@ -84,10 +87,6 @@ def GenerateMoreFingerprint(fileread, filewrite):
 			oneresult.update(GetPageFingerprint(''))
 	with open(filewrite, 'wb') as f:
 		f.write(JSONEncoder().encode(totalresult))
-
-# C004V001 : Get page items, from pages with eigenvalue in fingerprint
-def GetPageItems(response, pagediv, algorithm = ALGORITHM):
-    return GenerateDictByAlgorithmList(response, algorithm['GetPageItems'], pagediv)
 
 testlist = '''Ms9ds1ds3d2tds1d1s1d12s2d7sd2td9s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
 Ms9ds1ds3d2tds1d1s1d12s2d7sd2td5s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
@@ -114,7 +113,6 @@ s1d2fds1dtds2d2tds1d2sdadsragdgtdsd18sdsd4s3d2s12ds'''
 
 otherlist = ['afdsatdsd18sdsd4s3s1d2fds1dtds2d2tds1d2sdd2s12dsafdsrewr','aserghgfhthtr']
 eigen = ['ds1ds3d2tds1d1s1d1', 's1d2fds1dtds2d2tds1d2sd', 'tdsd18sdsd4s3d2s12ds']
-excludetaglist = ['div', 'script', 'style']
 
 if __name__ == '__main__':
 #    print GetContentByLength(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
@@ -131,18 +129,18 @@ if __name__ == '__main__':
 #	 print GenerateEigenvalueFromJson(const.LOG_FILE_L2_1, 'GetFingerprintByScript', GetEigenvalueInAll)
 #	 print GenerateRuleViaJson(const.LOG_FILE_L2_1, None)		# now for eigenvalue
 
-    GetTextInTag(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), excludetaglist)
+#    print GenerateEigenvalueFromJson(const.LOG_FILE_L2_1, 'GetFingerprintByScript', GetEigenvalueInAll)
+#    print GetTextInTag(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), eigenlist, excludetaglist)
     
-    #title = GetTitleByTag(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), None)
-    #print title.encode('utf-8')
-    #GetContentByDiv(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'),['<div itemprop="articleBody">'])
+#    title = GetTitleByTag(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), None)
+#    print title.encode('utf-8')
+#    GetContentByDiv(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'),['<div itemprop="articleBody">'])
     
-#    returndict = GenerateRuleViaJson(const.LOG_FILE_L2_1, None)
-#    pagediv = IsContentPage(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), returndict)
-#    print GetPageItems(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), pagediv)
-
-'''
-useful
-response = response.replace(body=response.body.replace('<br />', '\n')) 
-hxs = HtmlXPathSelector(response)
-'''
+##    returndict = GenerateRuleViaJson(const.LOG_FILE_L2_1, None)
+##    response = CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml')
+##    pagediv = IsContentPage(response, returndict)
+##    if pagediv:
+##        pageitems = GetPageItems(response, pagediv)
+##        for oneitem in pageitems.keys():
+##            print oneitem, pageitems[oneitem].encode('utf-8')
+    print 'OK'

@@ -137,7 +137,8 @@ def FingerprintHaveEigenvalue(fingerprint, eigendictlist):
     return returnlist
 
 # generate dict by run each algorithm in list, with the name as the algorithm name
-def GenerateDictByAlgorithmList(response, algorithmlist, otherpara=None):
+# if otherpara is [], means it is not content page
+def GenerateDictByAlgorithmList(response, algorithmlist, otherpara=[]):
     returndict = {}
     if response:
         for onealgo in algorithmlist:
