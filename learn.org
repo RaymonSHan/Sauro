@@ -330,6 +330,8 @@ http://www.cnblogs.com/yuxc/archive/2011/08/07/2130229.html for python in langua
 
 http://wklken.me/ adv for python, as memory, the best index i have see
 
+http://www.cnblogs.com/coser/archive/2011/12/14/2287739.html json myencode mydecode
+
 def parse_type(self,response, typeid):
     print typeid
 

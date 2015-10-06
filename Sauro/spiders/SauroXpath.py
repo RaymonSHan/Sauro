@@ -35,7 +35,7 @@ def GetXpathfromTag(tag):
     for oneattr in attrlist[:-1]:
         if order % 2 == 0:
             if order == 0: returnstring += '@'
-            else: returnstring += ' @'
+            else: returnstring += ' and @'
             returnstring += oneattr.strip()
         else:
             returnstring += '"' + oneattr + '"'
@@ -44,7 +44,7 @@ def GetXpathfromTag(tag):
     return returnstring
 
 # IN  : one tag
-# OUT : begin tag, inside tag, end tag
+# OUT : text stirng
 # for example <div class="sample"> inside </div>, return start of 'inside', start of '</div>', end of '<div>'
 def GetTextInTag(response, tag, excludetaglist):
     excludetag = ''
@@ -53,11 +53,15 @@ def GetTextInTag(response, tag, excludetaglist):
     toptag = True
     innest = 0
     
-    rawhtml = response.xpath(GetXpathfromTag(tag))[0].extract()
-    rawhtml = rawhtml.replace('\n', '').replace('\r', '').replace('</p>', '').replace('<p>', '\r\n').replace('<br />', '\r\n')
+    usedtag = response.xpath(GetXpathfromTag(tag))
+# although the eigen is match, do not found the tag it marked, return null    
+    if not usedtag:
+        return ''
+    rawhtml = usedtag[0].extract()
+    rawhtml = rawhtml.replace('\n', '').replace('\r', '').replace('</p>', '').replace('<p>', '\n').replace('<br />', '\n').replace('<br>', '\n').replace('</th>', ',').replace('</td>', ',').replace('</tr>', '\n')
 # this split should be replaced by own writen, for <script> str='</script>' if str < (or) > str1 ...  </script>
-    stringlist = rawhtml.split('<')
-    for onetagwithstring in stringlist:
+    tagwithstringlist = rawhtml.split('<')
+    for onetagwithstring in tagwithstringlist:
         if onetagwithstring:
 # useful value is onlytag[0] for tag name; splittagstring[1] for text
             splittagstring = onetagwithstring.split('>', 1)
@@ -82,3 +86,74 @@ def GetTextInTag(response, tag, excludetaglist):
 #        returnstring += onetext.extract()
 #    print returnstring.encode('utf-8');
 # this is ok #######################################################################################################################
+
+
+####################################################################################################################################
+# IN  : rawhtml, taglist:['div'] and so on
+# OUT : longest tag, text pairs
+def ReturnLeveledDivText(rawhtml):
+    tagstack = []
+    tagreturndict = {}
+    nowdictkey = ''
+    excludelist = ['script', 'style']
+    innest = 0
+    longesttextlen = 180
+    returndictkey = ''
+
+    rawhtml = rawhtml.replace('\n', '').replace('\r', '').replace('</p>', '').replace('<p>', '\n').replace('<br />', '\n').replace('<br>', '\n').replace('</th>', ',').replace('</td>', ',').replace('</tr>', '\n')
+    tagwithstringlist = rawhtml.split('<')
+    for onetagwithstring in tagwithstringlist:
+        if onetagwithstring:
+# useful value is onlytag[0] for tag name; splittagstring[1] for text
+            splittagstring = onetagwithstring.split('>', 1)
+            onlytag = splittagstring[0].split(' ', 1)
+# should do stack for excludelist end
+            if innest == 1:
+# here means string with tag in script, or '<', '>' in script                
+                if onlytag[0] != excludetagend:
+                    # should do string reorgnize
+                    continue
+                innest = 0
+            if onlytag[0] in excludelist:
+                excludetagend = '/' + onlytag[0]
+                innest = 1
+                continue
+# the tag name is div, change the tagstack, which is as key of returndict
+            if onlytag[0] == 'div':
+                tagstack.append(''.join(['<', splittagstring[0], '>']))
+                nowdictkey = ''.join(tagstack)
+                if not nowdictkey in tagreturndict.keys():
+                    tagreturndict[nowdictkey] = {}
+                    tagreturndict[nowdictkey]['text'] = []
+                IncreaseDictDictCount(tagreturndict, nowdictkey, 'count')
+            if onlytag[0] == '/div':
+                tagstack.pop()
+                nowdictkey = ''.join(tagstack)
+                #print ''.join(tagstack)
+            try:
+                tagreturndict[nowdictkey]['text'].append(splittagstring[1].strip(' \t'))
+                IncreaseDictDictCount(tagreturndict, nowdictkey, 'tagnum')
+                IncreaseDictDictCount(tagreturndict, nowdictkey, 'alllength', len(onetagwithstring))
+                IncreaseDictDictCount(tagreturndict, nowdictkey, 'textlength', len(splittagstring[1]))
+            except:
+                pass
+    for tagreturn in tagreturndict.keys():
+        nowtext = ''.join(tagreturndict[tagreturn]['text'])
+        if not nowtext:
+            continue
+        print 'div : ', tagreturn
+        print 'count : ', tagreturndict[tagreturn]['count']
+        print 'tagnum : ', tagreturndict[tagreturn]['tagnum']
+        print 'alllength : ', tagreturndict[tagreturn]['alllength']
+        print 'textlength : ',  tagreturndict[tagreturn]['textlength']
+        print 'textlength-strip', len(nowtext)
+        print 'text : ', nowtext
+        #print 'text : ', ''.join(tagreturndict[tagreturn['text']]).strip()
+    return
+    
+    for tagreturn in tagreturndict.keys():
+        nowtextlen = ReturnStringTotalLenght(tagreturndict[tagreturn]['text'])
+        if nowtextlen > longesttextlen:
+            longesttextlen = nowtextlen
+            returndictkey = tagreturn
+    return returndictkey, ''.join(tagreturndict[returndictkey['text']])

@@ -11,6 +11,7 @@ import os                                      # for findfile & error in open
 import hashlib                                 # for md5
 import fnmatch                                 # for findfile
 import errno                                   # for error in open
+import json                                    # for json process
 
 # for signals in scarpy, such as dispatcher.connect(self.initialize, signals.engine_started) 
 from scrapy import signals
@@ -24,9 +25,6 @@ from scrapy.linkextractors.sgml import SgmlLinkExtractor
 # useful in test, but may not in real work
 from scrapy.selector import Selector
 from scrapy.http import HtmlResponse
-
-# for json process
-from json import *
 
 # const for python from http://www.jb51.net/article/60434.htm
 class const: 
@@ -43,17 +41,23 @@ def GetMD5Filename(urlname):
     filename = md5val.hexdigest()
     return const.PAGE_HOME + filename[0:2]+'/'+filename[2:4]+'/'+filename
 
-def CreateSelectorbyFile(filename):
+def CreateRawbyFile(filename):
     sel = None
     with open(filename, 'rb') as f:
         filebody = f.read()
-        # gbk -> unicode # should remove later
-# see https://docs.python.org/2/howto/unicode.html#the-unicode-type        
-        sel = Selector(text=filebody.decode('gbk', 'ignore'), type="html")
-    return sel
-    
+# gbk -> unicode # should remove later
+# should change later        
+# see https://docs.python.org/2/howto/unicode.html#the-unicode-type
+    return filebody.decode('gbk', 'ignore')
+        
+def CreateRawbyURL(urlname):
+    return CreateRawbyFile(GetMD5Filename(urlname))
+
 def CreateSelectorbyString(string):
     return Selector(text=string, type="html")
+
+def CreateSelectorbyFile(filename):
+    return Selector(text=CreateRawbyFile(filename), type="html")
 
 # not means get response from web, get it from cache file by Sauro
 # ahead with http:// in my project
@@ -146,4 +150,9 @@ def GenerateDictByAlgorithmList(response, algorithmlist, otherpara=[]):
 			returndict[onealgo.__name__] = ''
     return returndict
 
+def ReturnStringTotalLenght(totalstring):                   # totalstring is []
+    totallength = 0
+    for onestring in totalstring:
+        totallength += len(onestring)
+    return totallength   
 ####################################################################################################################################

@@ -24,10 +24,12 @@ C001   : Get obvious content page : GetObviousContent()
 
 C002   : Get fingerprint of given page : GetPageFingerprint()
   V001 : (obsoletes) by division of URL
-  V002 : GetFingerprintByTagOrder(response)
+  V002 : GetFingerprintByTagOrder(response, otherpara)
          by structural tag in html page, as HTML_STRUCT_TAG
-  V003 : GetFingerprintByScript(response)
+  V003 : GetFingerprintByScript(response, otherpara)
          by text length in tag after strip, as SCRIPT_STRUCT_TAG
+  V004 : GetFingerprintByDivOrder(response, otherpara):             # Oct. 06 '15
+       : return the xpath path of the longest text and size
 
 C003   : Get eigenvalue from fingerprint : GenerateEigenvalue()
   V001 : GetEigenvalueInAll(strlist, otherlist)
@@ -72,7 +74,7 @@ ALGORITHM = {
 #	'GetURL'				            : GetURLinResponse,
 #	'GetURL'				            : GetURLinJSONFile,
   'GetObviousContent'         : GetContentByLength, 
-  'GetPageFingerprint'        : [GetFingerprintByTagOrder, GetFingerprintByScript],
+  'GetPageFingerprint'        : [GetFingerprintByTagOrder, GetFingerprintByScript, GetFingerprintByDivOrder],
   'GenerateEigenvalue'        : GetEigenvalueInAll,
 
   'GetPageItems'              : [GetTitle, GetContent],
@@ -84,8 +86,13 @@ ALGORITHM = {
 '''
 : IN  : SauroCommon.py
 def GetMD5Filename(urlname):
-def CreateSelectorbyFile(filename):
+def CreateRawbyFile(filename):        
+def CreateRawbyURL(urlname):
+    SauroCommon : CreateRawbyFile()
+    SauroCommon : GetMD5Filename()
 def CreateSelectorbyString(string):
+def CreateSelectorbyFile(filename):
+    SauroCommon : CreateRawbyFile()
 def CreateSelectorbyURL(urlname):
     SauroCommon : CreateSelectorbyFile()
     SauroCommon : GetMD5Filename()
@@ -97,6 +104,7 @@ def SumDictCount(resultdict):
 def RemoveDuplicateFromList(inputlist):
 def FingerprintHaveEigenvalue(fingerprint, eigendictlist):
 def GenerateDictByAlgorithmList(response, algorithmlist, otherpara=None):
+def ReturnStringTotalLenght(totalstring):
 
 : IN  : SauroXpath.py
 def GetXpathfromTag(tag):
@@ -124,7 +132,7 @@ def GenerateEigenvalueFromList(resultlist, fingerprint, algroithm):
     SauroAlgorithm : GetEigenvalueInAll()
 def GenerateRuleViaJson(jsonread, jsonwrite, algorithm = ALGORITHM):
     SauroSplider : GenerateEigenvalueFromList()
-def IsContentPage(response, eigendict, algorithm = ALGORITHM):
+def IsContentPage(response, eigenlist, algorithm = ALGORITHM):
     SauroSplider : GetPageFingerprint()
     SauroCommon : FingerprintHaveEigenvalue()
     SauroCommon : RemoveDuplicateFromList()

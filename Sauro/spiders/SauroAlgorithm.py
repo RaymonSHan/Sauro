@@ -22,10 +22,12 @@ const.HTML_STRUCT_TAG         = '//div[@*] | //table[@*] | //form[@*] | //script
 const.SCRIPT_STRUCT_TAG        = '//script | //style'
 
 const.PAGE_HOME                = '/home/raymon/security/pages_0922-level2/'
-const.LOG_FILE_L2              = '/home/raymon/security/Saurolog_0922-level2'
-const.LOG_FILE_L2_1            = '/home/raymon/security/Saurolog_0930-level2'
+const.FINGER_FILE_L2              = '/home/raymon/security/Saurolog_1006-level2'
+#const.LOG_FILE_L2              = '/home/raymon/security/Saurolog_0922-level2'
+#const.LOG_FILE_L2_1            = '/home/raymon/security/Saurolog_0930-level2'
 const.LOG_FILE_L2_2            = '/home/raymon/security/Saurolog_1004-level2'
-const.LOG_FILE_L3              = '/home/raymon/security/Saurolog_0923-level3'
+#const.TEST_FILE_L2_2           = '/home/raymon/security/Saurotest_1004-level2'
+#const.LOG_FILE_L3              = '/home/raymon/security/Saurolog_0923-level3'
 
 # JSON field in page result file
 pTOTALRESULT                  = 'totalresult'
@@ -51,12 +53,21 @@ def GetContentByLength(response):
         for onetext in onetag.xpath('text()'):
             textlen = len(onetext.extract().strip())
             if textlen > const.MIN_TEXT_LEN:
-                try:
+#                try:
 # add most near <div> tag into return, and given default value
-                    fulldiv = onetag.xpath('ancestor-or-self::div[1]').extract()[0]
-                    onlydiv = fulldiv[0 : fulldiv.find('>')+1]
-                except IndexError:
+#                    fulldiv = onetag.xpath('ancestor-or-self::div[1]').extract()[0]
+#                    onlydiv = fulldiv[0 : fulldiv.find('>')+1]
+#                except IndexError:
+#                    onlydiv = 'NoDiv'
+# change single tag to taglist for ancestor                     # Oct. 06 '15
+                divlist = []
+                for onediv in onetag.xpath('ancestor-or-self::div').extract():
+                    divlist.append(onediv[: onediv.find('>') + 1])
+                if divlist: 
+                    onlydiv = ''.join(divlist)
+                else: 
                     onlydiv = 'NoDiv'
+# change single tag to taglist for ancestor                     # Oct. 06 '15                    
                 if onlydiv not in textdict:
                     textdict.append(onlydiv)
     return textdict
@@ -101,6 +112,16 @@ def GetFingerprintByScript(response, otherpara):
     returnfinger += 'L'
     return returnfinger
 
+# C002V004 : Get fingerprint of given page
+# IN  : Selector object, such as Response
+# OUT : string of page fingerprint
+#
+# return the xpath path of the longest text and size
+def GetFingerprintByDivOrder(response, otherpara):
+    divtag, divtext = ReturnLeveledDivText(response.extract())
+    return divtag + ':' + str(len(divtext))
+
+    
 # C003V001 : Get eigenvalue from fingerprint
 # IN  : strlist[]   : List of fingerprint to generate eigenvalue
 #       otherlist[] : List of fingerprint must not contain eigenvalue
@@ -236,7 +257,7 @@ def CollectPageFromEigenvalue(resultlist, eigendict, fingerprint):
 # NOT use now, use GenerateRuleViaJson
 def GenerateEigenvalueFromJson(filename, fingerprint, algroithm):
     with open(filename, 'rb') as f:
-        totalresult = JSONDecoder().decode(f.read())[pTOTALRESULT]
+        totalresult = json.JSONDecoder().decode(f.read())[pTOTALRESULT]
     eigendict = GenerateEigenvalueFromList(totalresult, fingerprint, algroithm)
 #    print eigendict
     pagedict = CollectPageFromEigenvalue(totalresult, eigendict, fingerprint)
@@ -425,13 +446,7 @@ def ReturnStringMinLenght(totalstring):                     # totalstring is []
         onelen = len(onestring)
         if onelen < minlength:
             minlength = onelen
-    return minlength
-    
-def ReturnStringTotalLenght(totalstring):                   # totalstring is []
-    totallength = 0
-    for onestring in totalstring:
-        totallength += len(onestring)
-    return totallength    
+    return minlength 
 
 
 const.JAVAFUNC = 'javafunc'

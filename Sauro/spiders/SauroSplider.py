@@ -44,7 +44,7 @@ def GenerateEigenvalueFromList(resultlist, fingerprint, algroithm):
 def GenerateRuleViaJson(jsonread, jsonwrite, algorithm = ALGORITHM):
     returndict = {}
     with open(jsonread, 'rb') as f:
-	    alljson = JSONDecoder().decode(f.read())
+	    alljson = json.JSONDecoder().decode(f.read())
     totalresult = alljson[pTOTALRESULT]
     siteurl = 'stock.sohu.com'							# = alljson[pSITENAME/*'sitename'*/]
     returndict[rSITENAME] = siteurl
@@ -55,20 +55,25 @@ def GenerateRuleViaJson(jsonread, jsonwrite, algorithm = ALGORITHM):
 
 # part of S003V001
 # IN  : response : input page
-#     : eigendict : Return by GenerateRuleViaJson, check eigenvalue both in dict and ALGORITHM
+#     : eigenlist : Return by GenerateRuleViaJson, check eigenvalue both in dict and ALGORITHM
 # OUT : return the div tag for GetGageItem, if not return []
-def IsContentPage(response, eigendict, algorithm = ALGORITHM):
+def IsContentPage(response, eigenlist, algorithm = ALGORITHM):
     usedalgo = {}
     usedeigen = []
     usedalgo['GetPageFingerprint'] = usedeigen
-# return result use the algorithm both in dict and ALGORITHM    
+# return result use the algorithm both in dict and ALGORITHM
+    allreturn = []  
     for oneeigen in algorithm['GetPageFingerprint']:
-        if oneeigen.__name__ in eigendict:
+        if oneeigen.__name__ in eigenlist:
             usedeigen.append(oneeigen)
     returnfinger = GetPageFingerprint(response, usedalgo)
     for oneeigen in usedeigen:
-        allreturn = FingerprintHaveEigenvalue(returnfinger[oneeigen.__name__], eigendict[oneeigen.__name__])     
-    return RemoveDuplicateFromList(allreturn)
+        onereturn = FingerprintHaveEigenvalue(returnfinger[oneeigen.__name__], eigenlist[oneeigen.__name__])
+        for one in onereturn:
+            if not one in allreturn:
+                allreturn.append(one)
+#    return RemoveDuplicateFromList(allreturn)
+    return allreturn
 
 # C004V001 : Get page items, from pages with eigenvalue in fingerprint
 def GetPageItems(response, pagediv, algorithm = ALGORITHM):
@@ -79,7 +84,7 @@ def GetPageItems(response, pagediv, algorithm = ALGORITHM):
 # not use now
 def GenerateMoreFingerprint(fileread, filewrite):
     with open(fileread, 'rb') as f:
-        totalresult = JSONDecoder().decode(f.read())
+        totalresult = json.JSONDecoder().decode(f.read())
 	for oneresult in totalresult[pTOTALRESULT]:
 		del oneresult['fingerprint']
 		if oneresult['url'] != '':
@@ -87,7 +92,7 @@ def GenerateMoreFingerprint(fileread, filewrite):
 		else:
 			oneresult.update(GetPageFingerprint(''))
 	with open(filewrite, 'wb') as f:
-		f.write(JSONEncoder().encode(totalresult))
+		f.write(json.JSONEncoder().encode(totalresult))
 
 testlist = '''Ms9ds1ds3d2tds1d1s1d12s2d7sd2td9s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
 Ms9ds1ds3d2tds1d1s1d12s2d7sd2td5s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
@@ -115,34 +120,76 @@ s1d2fds1dtds2d2tds1d2sdadsragdgtdsd18sdsd4s3d2s12ds'''
 otherlist = ['afdsatdsd18sdsd4s3s1d2fds1dtds2d2tds1d2sdd2s12dsafdsrewr','aserghgfhthtr']
 eigen = ['ds1ds3d2tds1d1s1d1', 's1d2fds1dtds2d2tds1d2sd', 'tdsd18sdsd4s3d2s12ds']
 
-notusedict =
-{"url": "http://stock.sohu.com/20150921/n421671505.shtml", "textdiv": ["<div itemprop=\"articleBody\">"], "GetFingerprintByScript": "L10772144819311255366710321310263112107771077573149112177115325492998456194148295117536657731531101541476491591321308081402115102892482611771831091511230160347121671434973552570261932471513713621041047518386832573242380255104897143133981036219159L", "GetFingerprintByTagOrder": "Ms9ds1ds3d2tds1d1s1d13sd13s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM"}
+notusedict = {
+    "url": "http://stock.sohu.com/20150921/n421671505.shtml", "textdiv": ["<div itemprop=\"articleBody\">"], "GetFingerprintByScript": "L10772144819311255366710321310263112107771077573149112177115325492998456194148295117536657731531101541476491591321308081402115102892482611771831091511230160347121671434973552570261932471513713621041047518386832573242380255104897143133981036219159L", "GetFingerprintByTagOrder": "Ms9ds1ds3d2tds1d1s1d13sd13s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM"
+}
 # pageattr as notusedict
 def IsContentPageViaFingerprint(pageattr, eigendict, algorithm = ALGORITHM):
-    usedalgo = {}
-    usedeigen = []
-    usedalgo['GetPageFingerprint'] = usedeigen
-# return result use the algorithm both in dict and ALGORITHM    
-    for oneeigen in algorithm['GetPageFingerprint']:
-        if oneeigen.__name__ in eigendict:
-            usedeigen.append(oneeigen)
-    returnfinger = GetPageFingerprint(response, usedalgo)
-    for oneeigen in usedeigen:
-        allreturn = FingerprintHaveEigenvalue(returnfinger[oneeigen.__name__], eigendict[oneeigen.__name__])     
-    return RemoveDuplicateFromList(allreturn)
-
-def TestEigenViaJson(jsonread, algorithm = ALGORITHM):
-    returndict = {}
-    with open(jsonread, 'rb') as f:
-	    alljson = JSONDecoder().decode(f.read())
-    totalresult = alljson[pTOTALRESULT]
-    siteurl = 'stock.sohu.com'							# = alljson[pSITENAME/*'sitename'*/]
-    returndict[rSITENAME] = siteurl
-    for onealgo in algorithm['GetPageFingerprint']:
-        returndict[onealgo.__name__] = GenerateEigenvalueFromList(totalresult, onealgo.__name__, algorithm['GenerateEigenvalue'])
-    return returndict
+    allreturn = []
+    for fingerprint in algorithm['GetPageFingerprint']:
+        onereturn = FingerprintHaveEigenvalue(pageattr[fingerprint.__name__], eigendict[fingerprint.__name__])
+        for one in onereturn:
+            if not one in allreturn:
+                allreturn.append(one)
+    return allreturn
     
+def IsContentPageViaFingerprint_2(pageattr, eigendict, algorithm = ALGORITHM):
+#    tagreturn = FingerprintHaveEigenvalue(pageattr['GetFingerprintByTagOrder'], eigendict['GetFingerprintByTagOrder'])
+    scriptreturn = FingerprintHaveEigenvalue(pageattr['GetFingerprintByScript'], eigendict['GetFingerprintByScript'])
+    return scriptreturn    
 
+def TestEigenViaJson(jsonread, jsonwrite, eigenlist, algorithm = ALGORITHM):
+    returnpage = []
+    with open(jsonread, 'rb') as f:
+	    alljson = json.JSONDecoder().decode(f.read())
+    totalresult = alljson[pTOTALRESULT]
+    with open(jsonwrite, 'wb') as f:
+        for onepageattr in totalresult:
+            divlist = IsContentPageViaFingerprint_2(onepageattr, eigenlist, algorithm)
+            if divlist:
+                response = CreateSelectorbyURL(onepageattr['url'])
+                pageitems = GetPageItems(response, divlist)
+            #if not pageitems['GetContent']:
+                f.write('URL:' + onepageattr['url'] + '\n')
+                f.write('Title:' + pageitems['GetTitle'].encode('utf-8') + '\n')
+                f.write('Content:' + pageitems['GetContent'].encode('utf-8') + '\n\n')
+    return
+    
+def ReGenerateTextDiv(jsonread, jsonwrite):
+    with open(jsonread, 'rb') as f:
+	    alljson = json.JSONDecoder().decode(f.read())
+    totalresult = alljson[pTOTALRESULT]
+    for onepageattr in totalresult:
+        if onepageattr['textdiv']:
+            response = CreateSelectorbyURL(onepageattr['url'])
+            onepageattr['textdiv'] = GetContentByLength(response)
+    with open(jsonwrite, 'wb') as f:
+        f.write(json.JSONEncoder().encode(alljson))
+
+def DisplayTextDiv(jsonread):
+    alltextdiv = {}
+    with open(jsonread, 'rb') as f:
+	    alljson = json.JSONDecoder().decode(f.read())
+    totalresult = alljson[pTOTALRESULT]
+    for onepageattr in totalresult:
+        for onetextdiv in onepageattr['textdiv']:
+            if not onetextdiv in alltextdiv:
+                alltextdiv[onetextdiv] = 1
+            else:
+                alltextdiv[onetextdiv] += 1
+    sorttextdiv = sorted(alltextdiv.items(), key=lambda d: d[0])
+    for onediv in sorttextdiv:
+        print onediv
+        print '*' * 80
+       
+
+
+# http://q.stock.sohu.com/news/cn/169/601169/4514377.shtml
+# http://stock.sohu.com/20141024/n405416109.shtml
+# http://q.stock.sohu.com/cn,gg,300237,2075096544.shtml
+# http://stock.sohu.com/
+
+           
 if __name__ == '__main__':
 #    print GetContentByLength(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
 #    print GetFingerprintByTagOrder(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'))
@@ -153,7 +200,7 @@ if __name__ == '__main__':
 #    print GetPageFingerprint(CreateSelectorbyURL('http://q.stock.sohu.com/cn/300108/xjll.shtml'))
 
 #    GenerateMoreFingerprint('/home/raymon/security/Saurolog_0922-level2', '/home/raymon/security/Saurolog_1004-level2')
-#    GenerateMoreFingerprint('/home/raymon/security/SauroTest', '/home/raymon/security/SauroWrite')
+    #GenerateMoreFingerprint('/home/raymon/security/SauroTest', '/home/raymon/security/SauroWrite')
 
 #	 print GenerateEigenvalueFromJson(const.LOG_FILE_L2_1, 'GetFingerprintByScript', GetEigenvalueInAll)
 #	 print GenerateRuleViaJson(const.LOG_FILE_L2_1, None)		# now for eigenvalue
@@ -164,7 +211,10 @@ if __name__ == '__main__':
 #    title = GetTitleByTag(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), None)
 #    print title.encode('utf-8')
 #    GetContentByDiv(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'),['<div itemprop="articleBody">'])
-    
+
+#    ReGenerateTextDiv(const.LOG_FILE_L2_2, const.FINGER_FILE_L2)
+#    DisplayTextDiv(const.FINGER_FILE_L2)
+
 ##    returndict = GenerateRuleViaJson(const.LOG_FILE_L2_1, None)
 ##    response = CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml')
 ##    pagediv = IsContentPage(response, returndict)
@@ -173,6 +223,12 @@ if __name__ == '__main__':
 ##        for oneitem in pageitems.keys():
 ##            print oneitem, pageitems[oneitem].encode('utf-8')
 
-    returndict = GenerateRuleViaJson(const.LOG_FILE_L2_2, None)
-    print returndict
+##    eigenlist = GenerateRuleViaJson(const.LOG_FILE_L2_2, None)
+##    returndict = TestEigenViaJson(const.LOG_FILE_L2_2, const.TEST_FILE_L2_2, eigenlist)
+
+    #rawhtml = CreateRawbyURL('http://stock.sohu.com/20150910/n420784690.shtml')
+    rawhtml = CreateRawbyURL('http://stock.sohu.com/')
+    print ReturnLeveledDivText(rawhtml)
+
     print 'OK'
+
