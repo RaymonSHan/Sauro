@@ -182,15 +182,34 @@ def DisplayTextDiv(jsonread):
         print onediv
         print '*' * 80
        
+urllist = '''http://stock.sohu.com/20150910/n420784690.shtml
+http://q.stock.sohu.com/news/cn/169/601169/4514377.shtml
+http://stock.sohu.com/20141024/n405416109.shtml
+http://q.stock.sohu.com/cn,gg,300237,2075096544.shtml
+http://stock.sohu.com/'''
 
+testhtml = '''<script type="text/javascript">
+var i='this is "<script> and \\' and </script + ">"and '
+if (i < '<script //>') i = "<!-- /* & *//"
+// this is comment </script>
+/*  **
+</script too> '.* 
+//   //****/  (this will end)
+else i = '</script>'
+</script>this ok
+<script some /></script>
+<!---->asdf<!--->adsf-->
+<!------ this is > < '-->' -->'''
 
-# http://q.stock.sohu.com/news/cn/169/601169/4514377.shtml
-# http://stock.sohu.com/20141024/n405416109.shtml
-# http://q.stock.sohu.com/cn,gg,300237,2075096544.shtml
-# http://stock.sohu.com/
+testhtmlcomment = '''aaaa<script>
+'this\ </script> \\'  </script> >' **  cc
+//c</script> adsf
+</script>
+bbbb'''
 
-           
 if __name__ == '__main__':
+    TestLeveledDivText(testhtmlcomment, None)
+
 #    print GetContentByLength(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
 #    print GetFingerprintByTagOrder(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'))
 #    print GetEigenvalueInAll(testlist.split('\n'), otherlist)
@@ -226,9 +245,18 @@ if __name__ == '__main__':
 ##    eigenlist = GenerateRuleViaJson(const.LOG_FILE_L2_2, None)
 ##    returndict = TestEigenViaJson(const.LOG_FILE_L2_2, const.TEST_FILE_L2_2, eigenlist)
 
-    #rawhtml = CreateRawbyURL('http://stock.sohu.com/20150910/n420784690.shtml')
-    rawhtml = CreateRawbyURL('http://stock.sohu.com/')
-    print ReturnLeveledDivText(rawhtml)
-
+def notuse():
+    filehandle = open('/home/raymon/security/Saurotest_1007-level2','wb')
+        
+    with open(const.LOG_FILE_L2_2, 'rb') as f:
+	    alljson = json.JSONDecoder().decode(f.read())
+    totalresult = alljson[pTOTALRESULT]
+    for onepageattr in totalresult:
+        oneurl = onepageattr['url']
+        oneurl = 'http://q.stock.sohu.com/app2/mpssTrade.up?code=300168&ed=&sd='
+        filehandle.write('URL : ' + oneurl + '\n')
+        rawhtml = CreateRawbyURL(oneurl)
+        TestLeveledDivText(rawhtml, filehandle)
+    filehandle.close()
     print 'OK'
 
