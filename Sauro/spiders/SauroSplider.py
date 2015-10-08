@@ -186,7 +186,9 @@ urllist = '''http://stock.sohu.com/20150910/n420784690.shtml
 http://q.stock.sohu.com/news/cn/169/601169/4514377.shtml
 http://stock.sohu.com/20141024/n405416109.shtml
 http://q.stock.sohu.com/cn,gg,300237,2075096544.shtml
-http://stock.sohu.com/'''
+http://stock.sohu.com/
+http://q.stock.sohu.com/jlp/analyst/info.up?analystCode=303005722
+http://q.stock.sohu.com/app2/mpssTrade.up?code=300168&ed=&sd='''   # div miss match
 
 testhtml = '''<script type="text/javascript">
 var i='this is "<script> and \\' and </script + ">"and '
@@ -202,14 +204,30 @@ else i = '</script>'
 <!------ this is > < '-->' -->'''
 
 testhtmlcomment = '''aaaa<script>
-'this\ </script> \\'  </script> >' **  cc
+"this\ </script> \\' \\" </script> >' ** " cc
 //c</script> adsf
 </script>
 bbbb'''
 
-if __name__ == '__main__':
-    TestLeveledDivText(testhtmlcomment, None)
+testagain = '''<script asdf>
+i = "asdf <\\<" </script> right 
+</script>" ok
+'''
 
+if __name__ == '__main__':
+    filehandle = open('/home/raymon/security/Saurotest_1007-level2','wb')
+    with open(const.LOG_FILE_L2_2, 'rb') as f:
+	    alljson = json.JSONDecoder().decode(f.read())
+    totalresult = alljson[pTOTALRESULT]
+    for oneurl in totalresult[:300]:
+#        raw = CreateRawbyURL('http://stock.sohu.com/20141024/n405416109.shtml')
+        raw = CreateRawbyURL(oneurl['url'])
+        for onetext in ReturnLeveledDivText(raw, oneurl['url']):
+            print onetext#.encode('utf-8')
+            print '*' * 80
+        
+    print 'OK'
+    
 #    print GetContentByLength(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
 #    print GetFingerprintByTagOrder(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'))
 #    print GetEigenvalueInAll(testlist.split('\n'), otherlist)
@@ -247,16 +265,16 @@ if __name__ == '__main__':
 
 def notuse():
     filehandle = open('/home/raymon/security/Saurotest_1007-level2','wb')
-        
     with open(const.LOG_FILE_L2_2, 'rb') as f:
 	    alljson = json.JSONDecoder().decode(f.read())
     totalresult = alljson[pTOTALRESULT]
-    for onepageattr in totalresult:
-        oneurl = onepageattr['url']
-        oneurl = 'http://q.stock.sohu.com/app2/mpssTrade.up?code=300168&ed=&sd='
-        filehandle.write('URL : ' + oneurl + '\n')
-        rawhtml = CreateRawbyURL(oneurl)
-        TestLeveledDivText(rawhtml, filehandle)
     filehandle.close()
     print 'OK'
 
+    raw = CreateRawbyURL('http://stock.sohu.com/20150910/n420784690.shtml')
+    with open('/home/raymon/security/raw', 'wb') as f:
+        f.write(raw.encode('utf-8'))
+    response = CreateSelectorbyString(raw)
+    raw2 = response.extract()
+    with open('/home/raymon/security/raw2', 'wb') as f:
+        f.write(raw2.encode('utf-8'))    
