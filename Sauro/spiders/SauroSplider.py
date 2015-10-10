@@ -219,13 +219,12 @@ if __name__ == '__main__':
     with open(const.LOG_FILE_L2_2, 'rb') as f:
 	    alljson = json.JSONDecoder().decode(f.read())
     totalresult = alljson[pTOTALRESULT]
-    for oneurl in totalresult[:300]:
+    for oneurl in totalresult:#[:30]:
 #        raw = CreateRawbyURL('http://stock.sohu.com/20141024/n405416109.shtml')
-        raw = CreateRawbyURL(oneurl['url'])
-        for onetext in ReturnLeveledDivText(raw, oneurl['url']):
-            print onetext#.encode('utf-8')
-            print '*' * 80
-        
+        if oneurl['url']:
+            raw = CreateRawbyURL(oneurl['url'])
+            for onetext in ReturnLeveledDivText(raw, oneurl['url']):
+                print onetext.encode('utf-8')
     print 'OK'
     
 #    print GetContentByLength(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))

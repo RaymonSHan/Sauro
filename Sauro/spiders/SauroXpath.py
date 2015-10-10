@@ -1,7 +1,8 @@
-# -*- coding:gbk -*-
+# -*- coding:utf-8 -*-
 #
 # Althought I do not input any Chinese in my project, I still insert this progma before any codes.
 # Recommen GBK instead of Unicode or UTF-8 in any case.
+# here have a chinese char to detect, should move to another file
 #
 # Wrapping Column 132.
 
@@ -106,32 +107,42 @@ def InitTagDict(tagreturndict,nowdictkey):
     tagvalue = tagreturndict[nowdictkey]
     tagvalue['text'] = []
     tagvalue['count'] = 0
-    tagvalue['tagnum'] = 0
-    tagvalue['long30text'] = 0
-    tagvalue['long50text'] = 0
-    tagvalue['long100text'] = 0
-    tagvalue['long180text'] = 0
-    tagvalue['alllength'] = 0
-    tagvalue['textlength'] = 0
+    tagvalue['havep'] = 0
     return
+
+StringSizeRecord = [-1, 0, 5, 10, 20, 30, 50, 70, 100, 140, 180, 250]
+StirngSizeRecordMark = [ 'txt' + str(k) for k in StringSizeRecord ]
+StringSizeRecordLength = len(StringSizeRecord)
 
 def ProcessTagDict(tagreturndict, nowdictkey, nowtext, allstring):
     nowlength = len(nowtext)
+    alllength = len(allstring)
     tagvalue = tagreturndict[nowdictkey]
     tagvalue['text'].append(nowtext)
-    IncreaseDictCount(tagvalue, 'tagnum')
-    IncreaseDictCount(tagvalue, 'alllength', len(allstring))
-    IncreaseDictCount(tagvalue, 'textlength', nowlength)
-    if nowlength > 30:
-        IncreaseDictCount(tagvalue, 'long30text')
-    if nowlength > 50:
-        IncreaseDictCount(tagvalue, 'long50text')
-    if nowlength > 100:
-        IncreaseDictCount(tagvalue, 'long100text')
-    if nowlength > 180:
-        IncreaseDictCount(tagvalue, 'long180text')
-    return  
     
+    for nowrange in range(StringSizeRecordLength):
+        nowsize = StringSizeRecord[nowrange]
+        nowstr = StirngSizeRecordMark[nowrange]
+        if nowlength > nowsize:
+            IncreaseDictDictCount(tagvalue, nowstr, 'count')
+            IncreaseDictDictCount(tagvalue, nowstr, 'textlen', nowlength)
+            IncreaseDictDictCount(tagvalue, nowstr, 'alllen', alllength)
+    return  
+
+def ReturnTagDict(tagvalue, splitkey = ','):
+    returnlist = []
+    for nowstr in StirngSizeRecordMark:
+        try:
+            count = tagvalue[nowstr]['count']
+            textlen = tagvalue[nowstr]['textlen']
+            alllen = tagvalue[nowstr]['alllen']
+        except:
+            count = 0
+            textlen = 0
+            alllen = 0
+        returnlist.append(splitkey.join([nowstr, str(count), str(textlen), str(alllen)]))
+    return splitkey.join(returnlist)
+
 def ProcessScriptStatemachine(nowin, processstring):
     for onechar in processstring:
         if nowin == const.TAG_STRING_ESCAPE_SINGLE:
@@ -174,8 +185,25 @@ def ProcessScriptStatemachine(nowin, processstring):
 
 def IsMainText(tagvalue):
     nowlength = ReturnStringTotalLenght(tagvalue['text'])
-    probability = tagvalue['long180text'] * 100 + tagvalue['long100text'] * 30 + tagvalue['long50text'] * 10 + tagvalue['long30text'] * 5 + nowlength * 2 - tagvalue['alllength']
-    if probability > 100:
+######## for txt1010-180.csv ###################################################################################################### 
+    try:
+        number = tagvalue['txt180']['count']
+    except:
+        number = 0
+    if number != 0:
+######## for txt1010.csv ########################################################################################################## 
+#    try:
+#        number = tagvalue['txt30']['count']
+#    except:
+#        number = 0
+#    nowtext = ''.join(tagvalue['text'])
+#    charcount = nowtext.count(u'，', 0, 200)
+#    charcount += nowtext.count(u'。', 0, 200)
+#    if number != 0 and charcount != 0 and tagvalue['count'] == 1:
+######## for txt1009.csv ########################################################################################################## 
+#    probability = tagvalue['long180text'] * 500 + tagvalue['long100text'] * 100 + tagvalue['long50text'] * 50 + tagvalue['long30text'] * 20 + nowlength * 4 - tagvalue['alllength']
+#    if probability > 100:
+    
 #    if tagvalue['long50text'] and tagvalue['alllength'] / nowlength < 3 and tagvalue['tagnum'] / tagvalue['long50text'] < 10:
         return True
     else:
@@ -184,10 +212,13 @@ def IsMainText(tagvalue):
 def OutputMainText(tagreturn, tagvalue, textlen = 200):
     nowtext = ''.join(tagvalue['text'])
     nowlength = len(nowtext)
-    uselength = nowlength
-    if nowlength > textlen:
-        uselength = textlen
-    resultstring = ''.join(['url : ', tagvalue['url'], ', title : ', tagvalue['title'], '\ndiv : ', tagreturn, '\ncount : ', str(tagvalue['count']), ', tagnum : ', str(tagvalue['tagnum']), ', all : ', str(tagvalue['alllength']), ', text : ', str(tagvalue['textlength']), ', strip : ', str(nowlength), '\ntxt30 : ', str(tagvalue['long30text']), ', txt50 : ', str(tagvalue['long50text']), ', txt100 : ', str(tagvalue['long100text']), ', txt180 : ', str(tagvalue['long180text']), '\ntext : ', nowtext[:uselength], '...\n'])
+    usedtext = nowtext[:textlen].replace('\n', '<br>').replace('\t', '').replace('\r', '')
+    usedtitle = tagvalue['title'].replace('\n', '<br>').replace('\t', '').replace('\r', '')
+######## for txt1010.csv & txt1010-180.csv ######################################################################################## 
+    resultstring = '\t'.join([tagvalue['url'], usedtitle, tagreturn, str(tagvalue['count']), str(nowlength), ReturnTagDict(tagvalue, '\t'), usedtext])  
+######## for txt1009.csv ########################################################################################################## 
+#    resultstring = ''.join(['url\t', tagvalue['url'], '\ttitle\t', usedtitle, '\tdiv\t', tagreturn, '\tcount\t', str(tagvalue['count']), '\ttagnum\t', str(tagvalue['tagnum']), '\tall\t', str(tagvalue['alllength']), '\ttext\t', str(tagvalue['textlength']), '\tstrip\t', str(nowlength), '\ttxt30\t', str(tagvalue['long30text']), '\ttxt50\t', str(tagvalue['long50text']), '\ttxt100\t', str(tagvalue['long100text']), '\ttxt180\t', str(tagvalue['long180text']), '\ttext\t', usedtext, '\t'])    
+#    resultstring = ''.join(['url : ', tagvalue['url'], ', title : ', tagvalue['title'], '\ndiv : ', tagreturn, '\ncount : ', str(tagvalue['count']), ', tagnum : ', str(tagvalue['tagnum']), ', all : ', str(tagvalue['alllength']), ', text : ', str(tagvalue['textlength']), ', strip : ', str(nowlength), '\ntxt30 : ', str(tagvalue['long30text']), ', txt50 : ', str(tagvalue['long50text']), ', txt100 : ', str(tagvalue['long100text']), ', txt180 : ', str(tagvalue['long180text']), '\ntext : ', nowtext[:textlen], '...\n'])
     return resultstring
 
 # IN  : rawhtml, taglist:['div'] and so on
@@ -199,7 +230,7 @@ def ReturnLeveledDivText(rawhtml, url = ''):
     returndictkey = ''
     tagstack = []
     nowdictkey = ''.join(tagstack)
-    maintaglist = ['div', 'form', 'table']
+    maintaglist = ['div', 'form', 'table']          # should move to global
 # example in http://www.zhihu.com/question/20395431    
     maintagendlist = ['/'+key for key in maintaglist]
     returnlist = []
@@ -239,14 +270,12 @@ def ReturnLeveledDivText(rawhtml, url = ''):
 # in http://q.stock.sohu.com/app2/mpssTrade.up?code=300168&ed=&sd= , to fix the mistake
 # <th style="text-align:center;width:8%"  rowspan="2" class="e2 ">标的证券代码</div></th>                             
                             tagstack.append(nowstarttag)
-                            print 'match', nowstarttag, tagname, url
-                            print "error in pop match"
                     else:
-                        print 'error in pop '
+                        print 'error in pop ', nowstarttag, tagname, url
                     nowdictkey = ''.join(tagstack)
                 elif tagname == 'p' or tagname == 'br':
                     tagreturndict[nowdictkey]['text'].append('\n')
-
+                    tagreturndict[nowdictkey]['havep'] = 1
             if nowin == const.TAG_HTML_COMMENT:
                 if len(onlytag) <= 1:
                     tagattr = ''
