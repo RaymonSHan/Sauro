@@ -31,7 +31,7 @@ def GenerateEigenvalueFromList(resultlist, fingerprint, algroithm):
 # now eigendictdict counted the obvious content page group by div and fingerprint
     resultnuber = len(resultlist)
     for eigendict in eigendictdict.keys():
-        if resultnuber / SumDictCount(eigendictdict[eigendict]) < const.OBVIOUS_PAGE_SCALE:
+        if resultnuber / SumDictCount(eigendictdict[eigendict]) < const.OBVIOUS_PAGE_SCALE:         # here is 500
             #onelist = GetEigenvalueInAll(eigendictdict[eigendict].keys())
             onelist = algroithm(eigendictdict[eigendict].keys())        # change to function pointer
             if onelist:
@@ -40,11 +40,12 @@ def GenerateEigenvalueFromList(resultlist, fingerprint, algroithm):
 
 # S002V001 : Generate rules for sites from json
 # IN  : JSON file for every page with url and fingerprint in one site
-# OUT : JSON (maybe file) for rule of this site, nwo fnish eigenvalue
+# OUT : JSON (maybe file) for rule of this site, now finish eigenvalue
 def GenerateRuleViaJson(jsonread, jsonwrite, algorithm = ALGORITHM):
     returndict = {}
-    with open(jsonread, 'rb') as f:
-	    alljson = json.JSONDecoder().decode(f.read())
+    alljson = ReadFromJson(jsonread)
+#    with open(jsonread, 'rb') as f:
+#	    alljson = json.JSONDecoder().decode(f.read())
     totalresult = alljson[pTOTALRESULT]
     siteurl = 'stock.sohu.com'							# = alljson[pSITENAME/*'sitename'*/]
     returndict[rSITENAME] = siteurl
@@ -189,44 +190,20 @@ http://q.stock.sohu.com/cn,gg,300237,2075096544.shtml
 http://stock.sohu.com/
 http://q.stock.sohu.com/jlp/analyst/info.up?analystCode=303005722
 http://q.stock.sohu.com/app2/mpssTrade.up?code=300168&ed=&sd='''   # div miss match
-
-testhtml = '''<script type="text/javascript">
-var i='this is "<script> and \\' and </script + ">"and '
-if (i < '<script //>') i = "<!-- /* & *//"
-// this is comment </script>
-/*  **
-</script too> '.* 
-//   //****/  (this will end)
-else i = '</script>'
-</script>this ok
-<script some /></script>
-<!---->asdf<!--->adsf-->
-<!------ this is > < '-->' -->'''
-
-testhtmlcomment = '''aaaa<script>
-"this\ </script> \\' \\" </script> >' ** " cc
-//c</script> adsf
-</script>
-bbbb'''
-
-testagain = '''<script asdf>
-i = "asdf <\\<" </script> right 
-</script>" ok
-'''
-
-if __name__ == '__main__':
-    filehandle = open('/home/raymon/security/Saurotest_1007-level2','wb')
-    with open(const.LOG_FILE_L2_2, 'rb') as f:
-	    alljson = json.JSONDecoder().decode(f.read())
-    totalresult = alljson[pTOTALRESULT]
-    for oneurl in totalresult:#[:30]:
-#        raw = CreateRawbyURL('http://stock.sohu.com/20141024/n405416109.shtml')
-        if oneurl['url']:
-            raw = CreateRawbyURL(oneurl['url'])
-            for onetext in ReturnLeveledDivText(raw, oneurl['url']):
-                print onetext.encode('utf-8')
-    print 'OK'
     
+def PrintPageAll(oneurl):
+    raw = CreateRawbyURL(oneurl)
+    alltextdict = GetAllLeveledText(raw)
+    for onetext in alltextdict:
+        tagvalue = alltextdict[onetext]
+        tagvalue['title'] = 'pagetitle'
+        tagvalue['url'] = oneurl
+        tagvalue['tagorder'] = onetext
+        print OutputMainText(tagvalue)
+        
+            
+if __name__ == '__main__':
+
 #    print GetContentByLength(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
 #    print GetFingerprintByTagOrder(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'))
 #    print GetEigenvalueInAll(testlist.split('\n'), otherlist)
@@ -259,21 +236,47 @@ if __name__ == '__main__':
 ##        for oneitem in pageitems.keys():
 ##            print oneitem, pageitems[oneitem].encode('utf-8')
 
-##    eigenlist = GenerateRuleViaJson(const.LOG_FILE_L2_2, None)
+#    PrintPageAll('http://stock.sohu.com/20141024/n405416109.shtml')
+
+    eigenlist = GenerateRuleViaJson(const.FINGER_FILE_L2, None)
+#    alljson = ReadFromJson(const.FINGER_FILE_L2)
+#    totalresult = alljson[pTOTALRESULT]
+#    for oneresult in totalresult[:40]:
+#        response = CreateSelectorbyURL(oneresult['url'])
+    
+    for oneresult in urllist.split('\n'):
+        response = CreateSelectorbyURL(oneresult)
+        pagetaglist = IsContentPage(response, eigenlist)
+
+        if pagetaglist:
+            pageitems = GetPageItems(response, pagetaglist)
+            print 'URL : ', oneresult#['url']
+            for oneitem in pageitems.keys():
+                print oneitem, ' : ', pageitems[oneitem].encode('utf-8')
+            print '*' * 80
+            
+
+    
 ##    returndict = TestEigenViaJson(const.LOG_FILE_L2_2, const.TEST_FILE_L2_2, eigenlist)
 
-def notuse():
+##    totalresult = ReadFromJson('/home/raymon/security/Saurolog_1006-level2')
+##    usedresult = totalresult[pTOTALRESULT]
+##    for oneurl in usedresult:
+##        if oneurl['url']:
+##            oneurl['textdiv'] = GetLeveledDivText(CreateRawbyURL(oneurl['url']))
+##    print usedresult
+##    WriteToJson('/home/raymon/security/Saurolog_1012-level2', totalresult)
+
+
+def notuse():    
     filehandle = open('/home/raymon/security/Saurotest_1007-level2','wb')
     with open(const.LOG_FILE_L2_2, 'rb') as f:
 	    alljson = json.JSONDecoder().decode(f.read())
     totalresult = alljson[pTOTALRESULT]
-    filehandle.close()
+    for oneurl in totalresult[:30]:
+#        raw = CreateRawbyURL('http://stock.sohu.com/20141024/n405416109.shtml')
+        if oneurl['url']:
+            raw = CreateRawbyURL(oneurl['url'])
+            for onetext in ReturnLeveledTagText(raw, oneurl['url'], const.OUTPUT_FORMAT_DICT):
+                print onetext
     print 'OK'
-
-    raw = CreateRawbyURL('http://stock.sohu.com/20150910/n420784690.shtml')
-    with open('/home/raymon/security/raw', 'wb') as f:
-        f.write(raw.encode('utf-8'))
-    response = CreateSelectorbyString(raw)
-    raw2 = response.extract()
-    with open('/home/raymon/security/raw2', 'wb') as f:
-        f.write(raw2.encode('utf-8'))    

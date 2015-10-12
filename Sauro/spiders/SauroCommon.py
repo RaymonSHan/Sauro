@@ -66,13 +66,23 @@ def CreateSelectorbyURL(urlname):
 
 # whether the checkstr is substring of one of string in strlist
 # return sequence in strlist for first found, or return -1 for not found
-def InSubstring(checkstr, strlist):
+def InSubString(checkstr, strlist):
     order = 0
     for onelist in strlist:
         if onelist.find(checkstr) != -1:
             return order
         order += 1
     return -1
+    
+# whether the one of string in strlist is substring of checkstr 
+# return sequence in strlist for first found, or return -1 for not found
+def InSuperString(checkstr, strlist):
+    order = 0
+    for onelist in strlist:
+        if checkstr.find(onelist) != -1:
+            return order
+        order += 1
+    return -1    
 
 # Divide given stringlist into two part. One list have all eigenvalue, other list have none or part.
 def DivideByEigenvalue(eigenlist, totallist):
@@ -120,6 +130,15 @@ def RemoveDuplicateFromList(inputlist):
         if not onelist in returnlist:
             returnlist.append(onelist)
     return returnlist
+
+def ReadFromJson(filename):
+    with open(filename, 'rb') as f:
+        alljson = json.loads(f.read())
+    return alljson
+
+def WriteToJson(filename, alljson):
+    with open(filename, 'wb') as f:
+        f.write(json.dumps(alljson, ensure_ascii=False))
 
 # whether the given fingerprint have a list of eigen in eigendict
 # used in IsContentPage

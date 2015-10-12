@@ -21,6 +21,8 @@ ALGORITHM:
 C001   : Get obvious content page : GetObviousContent()
   V001 : GetContentByLength(response)
          Any page within continuous text longer than MIN_TEXT_LEN
+* V002 : GetLeveledDivText(response)                                            # changed in Oct. 12 '15
+         My Xpath docode, depent on IsMainText() defined in SauroXpath.py
 
 C002   : Get fingerprint of given page : GetPageFingerprint()
   V001 : (obsoletes) by division of URL
@@ -28,8 +30,8 @@ C002   : Get fingerprint of given page : GetPageFingerprint()
          by structural tag in html page, as HTML_STRUCT_TAG
   V003 : GetFingerprintByScript(response, otherpara)
          by text length in tag after strip, as SCRIPT_STRUCT_TAG
-  V004 : GetFingerprintByDivOrder(response, otherpara):             # Oct. 06 '15
-       : return the xpath path of the longest text and size
+  V004 : GetFingerprintByDivOrder(response, otherpara)                          # Oct. 06 '15
+         return the xpath path of the longest text and size
 
 C003   : Get eigenvalue from fingerprint : GenerateEigenvalue()
   V001 : GetEigenvalueInAll(strlist, otherlist)
@@ -73,13 +75,15 @@ def GetContent(response, otherpara):
 ALGORITHM = {
 #	'GetURL'				            : GetURLinResponse,
 #	'GetURL'				            : GetURLinJSONFile,
-  'GetObviousContent'         : GetContentByLength, 
-  'GetPageFingerprint'        : [GetFingerprintByTagOrder, GetFingerprintByScript, GetFingerprintByDivOrder],
+#  'GetObviousContent'         : GetContentByLength, 
+  'GetObviousContent'         : GetLeveledDivText,                              # changed in  Oct. 12 '15
+  'GetPageFingerprint'        : [GetFingerprintByTagOrder, GetFingerprintByScript],
   'GenerateEigenvalue'        : GetEigenvalueInAll,
 
   'GetPageItems'              : [GetTitle, GetContent],
   'GetTitle'                  : GetTitleByTag,
-  'GetContent'                : GetContentByDiv,
+#  'GetContent'                : GetContentByDiv,
+  'GetContent'                : GetContentByLevelDiv,                           # changed in  Oct. 12 '15
 }
 
 # List of Cross-reference
@@ -96,7 +100,7 @@ def CreateSelectorbyFile(filename):
 def CreateSelectorbyURL(urlname):
     SauroCommon : CreateSelectorbyFile()
     SauroCommon : GetMD5Filename()
-def InSubstring(checkstr, strlist):
+def InSubString(checkstr, strlist):
 def DivideByEigenvalue(eigenlist, totallist):
 def IncreaseDictCount(resultdict, key, count = 1):
 def IncreaseDictDictCount(resultdict, key1, key2, count = 1):
@@ -116,7 +120,7 @@ def GetContentByLength(response):
 def GetFingerprintByTagOrder(response, otherpara):
 def GetFingerprintByScript(response, otherpara):
 def GetEigenvalueInAll(strlist, otherlist = []):
-    SauroCommon : InSubstring()
+    SauroCommon : InSubString()
 def ReturnBestContent(stringlist):
 def GetTitleByTag(response, otherpara):
 def GetContentByDiv(response, otherpara):

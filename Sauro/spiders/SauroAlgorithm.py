@@ -8,37 +8,38 @@
 from SauroCommon import *
 from SauroXpath import *
 
-const.MIN_TEXT_LEN             = 180
-const.MIN_EIGENVALUE_LEN       = 16
+const.MIN_TEXT_LEN              = 180
+const.MIN_EIGENVALUE_LEN        = 16
 
 # if a kind of fingerprint is too few, omit it, althought it contain long text
 # for my sample with 69626 page, if the kind number less 69626/500 = 139, omit it
 # analysis my sample, the number less 47 should omit, greater 669 should remain, so SCALE can be 104 - 1481
 # this value is associate with MIN_TEXT_LEN
-const.OBVIOUS_PAGE_SCALE       = 500
+const.OBVIOUS_PAGE_SCALE        = 500
 
-const.HTML_STRUCT_TAG         = '//div[@*] | //table[@*] | //form[@*] | //script[@*] | //style[@*]'
-#const.HTML_STRUCT_TAG          = '//div | //table | //form | //script | //style'
-const.SCRIPT_STRUCT_TAG        = '//script | //style'
+const.HTML_STRUCT_TAG           = '//div[@*] | //table[@*] | //form[@*] | //script[@*] | //style[@*]'
+#const.HTML_STRUCT_TAG           = '//div | //table | //form | //script | //style'
+const.SCRIPT_STRUCT_TAG         = '//script | //style'
 
-const.PAGE_HOME                = '/home/raymon/security/pages_0922-level2/'
-const.FINGER_FILE_L2              = '/home/raymon/security/Saurolog_1006-level2'
-#const.LOG_FILE_L2              = '/home/raymon/security/Saurolog_0922-level2'
-#const.LOG_FILE_L2_1            = '/home/raymon/security/Saurolog_0930-level2'
-const.LOG_FILE_L2_2            = '/home/raymon/security/Saurolog_1004-level2'
-#const.TEST_FILE_L2_2           = '/home/raymon/security/Saurotest_1004-level2'
-#const.LOG_FILE_L3              = '/home/raymon/security/Saurolog_0923-level3'
+const.PAGE_HOME                 = '/home/raymon/security/pages_0922-level2/'
+const.FINGER_FILE_L2            = '/home/raymon/security/Saurolog_1012-level2'
+#const.FINGER_FILE_L2            = '/home/raymon/security/Saurolog_1006-level2'
+#const.LOG_FILE_L2               = '/home/raymon/security/Saurolog_0922-level2'
+#const.LOG_FILE_L2_1             = '/home/raymon/security/Saurolog_0930-level2'
+const.LOG_FILE_L2_2             = '/home/raymon/security/Saurolog_1004-level2'
+#const.TEST_FILE_L2_2            = '/home/raymon/security/Saurotest_1004-level2'
+#const.LOG_FILE_L3               = '/home/raymon/security/Saurolog_0923-level3'
 
 # JSON field in page result file
-pTOTALRESULT                  = 'totalresult'
-pSITENAME                     = 'sitename'
-pTEXTDIV                      = 'textdiv'
+pTOTALRESULT                    = 'totalresult'
+pSITENAME                       = 'sitename'
+pTEXTDIV                        = 'textdiv'
 
 # JSON field in rule file
-rSITENAME                     = 'sitename'
+rSITENAME                       = 'sitename'
 
 # used by GetContentByDiv()
-excludetaglist                 = ['div', 'script', 'style']
+excludetaglist                  = ['div', 'script', 'style']
 
 # C001V001 : Get obvious content page
 # IN  : Selector object, such as Response
@@ -72,6 +73,21 @@ def GetContentByLength(response):
                     textdict.append(onlydiv)
     return textdict
 
+# C001V002 : Get obvious content page
+# IN  : Selector object, such as Response
+# OUT : List of <div> tag, depent on IsMainText() defined in SauroXpath.py
+def GetLeveledDivText(response):
+    returnlist = []
+    if isinstance(response, scrapy.selector.unified.Selector):
+        rawhtml = response.extract()
+    else:
+        rawhtml = response
+    url = ''
+    divtext = ReturnLeveledTagText(rawhtml, url, const.OUTPUT_FORMAT_DICT)
+    for onediv in divtext:
+        returnlist.append(onediv['tagorder'])
+    return returnlist
+        
 # C002V002 : Get fingerprint of given page
 # IN  : Selector object, such as Response
 # OUT : string of page fingerprint
@@ -117,9 +133,9 @@ def GetFingerprintByScript(response, otherpara):
 # OUT : string of page fingerprint
 #
 # return the xpath path of the longest text and size
-def GetFingerprintByDivOrder(response, otherpara):
-    divtag, divtext = ReturnLeveledDivText(response.extract())
-    return divtag + ':' + str(len(divtext))
+#def GetFingerprintByDivOrder(response, otherpara):
+#    divtag, divtext = ReturnLeveledTagText(response.extract())
+#    return divtag + ':' + str(len(divtext))
 
     
 # C003V001 : Get eigenvalue from fingerprint
@@ -152,7 +168,7 @@ def GetEigenvalueInAll(strlist, otherlist = []):
 # So should add the shorter one as eigenvalue
                 maybekey = firststr[beginpos:endpos-1]
 # althought it not happened, returnlist have no duplicate
-                if InSubstring(maybekey, otherlist) == -1 and InSubstring(maybekey, returnlist) == -1:
+                if InSubString(maybekey, otherlist) == -1 and InSubString(maybekey, returnlist) == -1:
                     returnlist.append(maybekey)
                 beginpos = endpos
                 endpos = beginpos + const.MIN_EIGENVALUE_LEN
@@ -396,7 +412,7 @@ def ReturnProbabilityStampKey(dictstr):
             lasthit = 0
             while endpos <= lastpos:
                 checkstr = searchstr[beginpos:endpos]
-                if notFirstSearch and inSubstring(checkstr, returnlist) == 0:
+                if notFirstSearch and inSubString(checkstr, returnlist) == 0:
                     endpos += 1
                     continue                                        # this substring have checked, may be changed later
                     
