@@ -394,7 +394,6 @@ def GetContentByLevelDiv(response, otherpara):
             nowtext = ''.join(tagreturndict[tagreturn]['text'])
             if HavePunctuation(nowtext) and selflevel < len(nowtext):
                 returnlist.append(nowtext)
-                continue
     return ''.join(returnlist)
             
         

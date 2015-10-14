@@ -8,275 +8,190 @@
 from SauroCommon import *
 from SauroAlgorithm import *
 from SauroSetting import *
+from SauroProcess import *
 
-# use algorithm in GetPageFingerprint
-# return dict of all kinds of fingerprint
-def GetPageFingerprint(response, algorithm = ALGORITHM):
-    return GenerateDictByAlgorithmList(response, algorithm['GetPageFingerprint'])
+from SauroConfigure import *
 
-# part of S002V001
-def GenerateEigenvalueFromList(resultlist, fingerprint, algroithm):
-    eigendictdict = {}
-    returndict = {}
-    for oneresult in resultlist:
-        divnumber = len(oneresult[pTEXTDIV])
-# in json format, there are multi div with same value, but only one need 
-        if divnumber > 1:
-            nodup = RemoveDuplicateFromList(oneresult[pTEXTDIV])
-            for onenodup in nodup:
-                IncreaseDictDictCount(eigendictdict, onenodup, oneresult[fingerprint])
-# only one div exist, use it directly
-        elif divnumber == 1:
-            IncreaseDictDictCount(eigendictdict, oneresult[pTEXTDIV][0], oneresult[fingerprint])
-# now eigendictdict counted the obvious content page group by div and fingerprint
-    resultnuber = len(resultlist)
-    for eigendict in eigendictdict.keys():
-        if resultnuber / SumDictCount(eigendictdict[eigendict]) < const.OBVIOUS_PAGE_SCALE:         # here is 500
-            #onelist = GetEigenvalueInAll(eigendictdict[eigendict].keys())
-            onelist = algroithm(eigendictdict[eigendict].keys())        # change to function pointer
-            if onelist:
-                returndict[eigendict] = onelist
-    return returndict
-
-# S002V001 : Generate rules for sites from json
-# IN  : JSON file for every page with url and fingerprint in one site
-# OUT : JSON (maybe file) for rule of this site, now finish eigenvalue
-def GenerateRuleViaJson(jsonread, jsonwrite, algorithm = ALGORITHM):
-    returndict = {}
-    alljson = ReadFromJson(jsonread)
-#    with open(jsonread, 'rb') as f:
-#	    alljson = json.JSONDecoder().decode(f.read())
-    totalresult = alljson[pTOTALRESULT]
-    siteurl = 'stock.sohu.com'							# = alljson[pSITENAME/*'sitename'*/]
-    returndict[rSITENAME] = siteurl
-    for onealgo in algorithm['GetPageFingerprint']:
-        returndict[onealgo.__name__] = GenerateEigenvalueFromList(totalresult, onealgo.__name__, algorithm['GenerateEigenvalue'])
-# should write rule to json, have not do it yet
-    return returndict
-
-# part of S003V001
-# IN  : response : input page
-#     : eigenlist : Return by GenerateRuleViaJson, check eigenvalue both in dict and ALGORITHM
-# OUT : return the div tag for GetGageItem, if not return []
-def IsContentPage(response, eigenlist, algorithm = ALGORITHM):
-    usedalgo = {}
-    usedeigen = []
-    usedalgo['GetPageFingerprint'] = usedeigen
-# return result use the algorithm both in dict and ALGORITHM
-    allreturn = []  
-    for oneeigen in algorithm['GetPageFingerprint']:
-        if oneeigen.__name__ in eigenlist:
-            usedeigen.append(oneeigen)
-    returnfinger = GetPageFingerprint(response, usedalgo)
-    for oneeigen in usedeigen:
-        onereturn = FingerprintHaveEigenvalue(returnfinger[oneeigen.__name__], eigenlist[oneeigen.__name__])
-        for one in onereturn:
-            if not one in allreturn:
-                allreturn.append(one)
-#    return RemoveDuplicateFromList(allreturn)
-    return allreturn
-
-# C004V001 : Get page items, from pages with eigenvalue in fingerprint
-def GetPageItems(response, pagediv, algorithm = ALGORITHM):
-    return GenerateDictByAlgorithmList(response, algorithm['GetPageItems'], pagediv)
-    
-####################################################################################################################################
-# test function, generate script fingerprint
-# not use now
-def GenerateMoreFingerprint(fileread, filewrite):
-    with open(fileread, 'rb') as f:
-        totalresult = json.JSONDecoder().decode(f.read())
-	for oneresult in totalresult[pTOTALRESULT]:
-		del oneresult['fingerprint']
-		if oneresult['url'] != '':
-			oneresult.update(GetPageFingerprint(CreateSelectorbyURL(oneresult['url'])))
-		else:
-			oneresult.update(GetPageFingerprint(''))
-	with open(filewrite, 'wb') as f:
-		f.write(json.JSONEncoder().encode(totalresult))
-
-testlist = '''Ms9ds1ds3d2tds1d1s1d12s2d7sd2td9s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d12s2d7sd2td5s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd18s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd18s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd15s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd8sd4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd13s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd9td4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd14s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd10sd4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd10td4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
-Ms8ds1ds3d2tds1d1s1d13sd9tdtd5s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd9td6s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd15s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd17s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd12sd4s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd17s2d1sd1s10ds2d9s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12ds
-Ms9ds1ds3d2tds1d1s1d13sd13s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sd7sd61tdsd18sdsd4s3d2s12ds
-srgtryy6uiyuiyuopopp980987iouyiyl
-dtwer346ti
-rdtgtu7iigjhgjy
-s1d2fds1dtds2d2tds1d2sdadsragdgtdsd18sdsd4s3d2s12ds'''
-
-otherlist = ['afdsatdsd18sdsd4s3s1d2fds1dtds2d2tds1d2sdd2s12dsafdsrewr','aserghgfhthtr']
-eigen = ['ds1ds3d2tds1d1s1d1', 's1d2fds1dtds2d2tds1d2sd', 'tdsd18sdsd4s3d2s12ds']
-
-notusedict = {
-    "url": "http://stock.sohu.com/20150921/n421671505.shtml", "textdiv": ["<div itemprop=\"articleBody\">"], "GetFingerprintByScript": "L10772144819311255366710321310263112107771077573149112177115325492998456194148295117536657731531101541476491591321308081402115102892482611771831091511230160347121671434973552570261932471513713621041047518386832573242380255104897143133981036219159L", "GetFingerprintByTagOrder": "Ms9ds1ds3d2tds1d1s1d13sd13s2d3sd1s10ds2d10s1d2fds1dtds2d2tds1d2sds1d10s1d2tdsd18sdsd4s3d2s12dsM"
-}
-# pageattr as notusedict
-def IsContentPageViaFingerprint(pageattr, eigendict, algorithm = ALGORITHM):
-    allreturn = []
-    for fingerprint in algorithm['GetPageFingerprint']:
-        onereturn = FingerprintHaveEigenvalue(pageattr[fingerprint.__name__], eigendict[fingerprint.__name__])
-        for one in onereturn:
-            if not one in allreturn:
-                allreturn.append(one)
-    return allreturn
-    
-def IsContentPageViaFingerprint_2(pageattr, eigendict, algorithm = ALGORITHM):
-#    tagreturn = FingerprintHaveEigenvalue(pageattr['GetFingerprintByTagOrder'], eigendict['GetFingerprintByTagOrder'])
-    scriptreturn = FingerprintHaveEigenvalue(pageattr['GetFingerprintByScript'], eigendict['GetFingerprintByScript'])
-    return scriptreturn    
-
-def TestEigenViaJson(jsonread, jsonwrite, eigenlist, algorithm = ALGORITHM):
-    returnpage = []
-    with open(jsonread, 'rb') as f:
-	    alljson = json.JSONDecoder().decode(f.read())
-    totalresult = alljson[pTOTALRESULT]
-    with open(jsonwrite, 'wb') as f:
-        for onepageattr in totalresult:
-            divlist = IsContentPageViaFingerprint_2(onepageattr, eigenlist, algorithm)
-            if divlist:
-                response = CreateSelectorbyURL(onepageattr['url'])
-                pageitems = GetPageItems(response, divlist)
-            #if not pageitems['GetContent']:
-                f.write('URL:' + onepageattr['url'] + '\n')
-                f.write('Title:' + pageitems['GetTitle'].encode('utf-8') + '\n')
-                f.write('Content:' + pageitems['GetContent'].encode('utf-8') + '\n\n')
-    return
-    
-def ReGenerateTextDiv(jsonread, jsonwrite):
-    with open(jsonread, 'rb') as f:
-	    alljson = json.JSONDecoder().decode(f.read())
-    totalresult = alljson[pTOTALRESULT]
-    for onepageattr in totalresult:
-        if onepageattr['textdiv']:
-            response = CreateSelectorbyURL(onepageattr['url'])
-            onepageattr['textdiv'] = GetContentByLength(response)
-    with open(jsonwrite, 'wb') as f:
-        f.write(json.JSONEncoder().encode(alljson))
-
-def DisplayTextDiv(jsonread):
-    alltextdiv = {}
-    with open(jsonread, 'rb') as f:
-	    alljson = json.JSONDecoder().decode(f.read())
-    totalresult = alljson[pTOTALRESULT]
-    for onepageattr in totalresult:
-        for onetextdiv in onepageattr['textdiv']:
-            if not onetextdiv in alltextdiv:
-                alltextdiv[onetextdiv] = 1
-            else:
-                alltextdiv[onetextdiv] += 1
-    sorttextdiv = sorted(alltextdiv.items(), key=lambda d: d[0])
-    for onediv in sorttextdiv:
-        print onediv
-        print '*' * 80
-       
-urllist = '''http://stock.sohu.com/20150910/n420784690.shtml
-http://q.stock.sohu.com/news/cn/169/601169/4514377.shtml
-http://stock.sohu.com/20141024/n405416109.shtml
-http://q.stock.sohu.com/cn,gg,300237,2075096544.shtml
-http://stock.sohu.com/
-http://q.stock.sohu.com/jlp/analyst/info.up?analystCode=303005722
-http://q.stock.sohu.com/app2/mpssTrade.up?code=300168&ed=&sd='''   # div miss match
-    
-def PrintPageAll(oneurl):
-    raw = CreateRawbyURL(oneurl)
-    alltextdict = GetAllLeveledText(raw)
-    for onetext in alltextdict:
-        tagvalue = alltextdict[onetext]
-        tagvalue['title'] = 'pagetitle'
-        tagvalue['url'] = oneurl
-        tagvalue['tagorder'] = onetext
-        print OutputMainText(tagvalue)
-        
-            
 if __name__ == '__main__':
+    print const.ALLOW
 
-#    print GetContentByLength(CreateSelectorbyURL('http://q.stock.sohu.com/cn/000025/yjyg.shtml'))
-#    print GetFingerprintByTagOrder(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'))
-#    print GetEigenvalueInAll(testlist.split('\n'), otherlist)
 
-#    print DivideByEigenvalue(eigen, testlist.split('\n'))
-#    print GenerateEigenvalueFromJson(const.LOG_FILE_L2)
-#    print GetPageFingerprint(CreateSelectorbyURL('http://q.stock.sohu.com/cn/300108/xjll.shtml'))
+const.JAVAFUNC = 'javafunc'
+const.HREFFUNC = 'hreffunc'
+const.FUNCHEAD = 'function main(splash) '
+const.MAX_CRAWL_LEVEL = 2
+const.HOST = 'http://stock.sohu.com/'
+const.ALLOW = 'stock.sohu.com'
 
-#    GenerateMoreFingerprint('/home/raymon/security/Saurolog_0922-level2', '/home/raymon/security/Saurolog_1004-level2')
-    #GenerateMoreFingerprint('/home/raymon/security/SauroTest', '/home/raymon/security/SauroWrite')
+class SauroCreateSpider(scrapy.Spider):
+    name = 'SauroCreate'
 
-#	 print GenerateEigenvalueFromJson(const.LOG_FILE_L2_1, 'GetFingerprintByScript', GetEigenvalueInAll)
-#	 print GenerateRuleViaJson(const.LOG_FILE_L2_1, None)		# now for eigenvalue
+    allowed_domains = [const.ALLOW]
+    start_urls = [const.HOST]
+    #start_urls = ["http://stock.sohu.com/stock_scrollnews_152.shtml"]
+    #start_urls = ["http://stock.sohu.com/20150914/n421098148.shtml"]
+    #start_urls = ["http://stock.sohu.com/20150915/n421130868.shtml"]
 
-#    print GenerateEigenvalueFromJson(const.LOG_FILE_L2_1, 'GetFingerprintByScript', GetEigenvalueInAll)
-#    print GetTextInTag(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), eigenlist, excludetaglist)
+    mydict = {}
+    alltextdict = {}
+    loghandle = None
+        
+    #def parse_stampkey(self, response):
+    #    strlist = sttry.split()
+    #    print ReturnStampKey(strlist, None)
+
+#    def __init__(self):
+#        dispatcher.connect(self.initialize, signals.engine_started)
+#        dispatcher.connect(self.finalize, signals.engine_stopped)
+
+    def parse_readfile(self, response):
+        for pathfilename in iterfindfiles(const.FILE_HOME, '*'):
+            #filesize = os.path.getsize(pathfilename)
+            handle = open(pathfilename, 'rb')
+            sel = Selector(text=handle.read(), type="html")
+            handle.close()
+            filename = os.path.split(pathfilename)[1]
+            returl = ReturnStamp(sel)
+            try:
+                self.mydict[returl].append(filename)
+            except KeyError:
+                self.mydict[returl] = []
+                self.mydict[returl].append(filename)
+                
+            textdict = ReturnTextDiv(sel)
+            for onlydiv in textdict:
+                divnum = textdict[onlydiv]
+                try:
+                    self.alltextdict[onlydiv][returl] += divnum
+                    self.alltextdict[onlydiv]['TOTAL'] += divnum
+                except KeyError:
+                    try:
+                        self.alltextdict[onlydiv][returl] = divnum
+                        self.alltextdict[onlydiv]['TOTAL'] += divnum
+                    except KeyError:
+                        self.alltextdict[onlydiv] = {}
+                        self.alltextdict[onlydiv][returl] = divnum
+                        self.alltextdict[onlydiv]['TOTAL'] = divnum
+
+    def initialize(self):
+        self.logfile = open(const.LOG_FILE, 'wb')
+        self.logfile.write('{\"totalresult\":[\n')
+ 
+    def finalize(self):
+        self.logfile.write('{"url":"", "stamp":"", "textdiv":[]}]}')
+        self.logfile.close()
+ 
+    def parse(self, response):
+        jsoncontent = json.loads(self.logfile.read())
+        print jsoncontent["totalresult"]
+        
+    def finalize_notuse_3(self):
+        handle = open(const.LOG_FILE, 'wb')
+        sortdict = sorted(self.alltextdict.items(), key=lambda d: d[1]['TOTAL'], reverse=True)
+        for (pdiv, urlmap) in sortdict:
+            handle.write(pdiv)
+            handle.write(' ')
+            handle.write(str(urlmap['TOTAL']))
+            handle.write('\n')
+            for onemap in urlmap:
+                if onemap != 'TOTAL':
+                    handle.write(onemap)
+                    handle.write(' ')
+                    handle.write(str(urlmap[onemap]))
+                    handle.write(' ')
+                    handle.write(str(len(self.mydict[onemap])))
+                    handle.write(' ')
+                    handle.write(self.mydict[onemap][0])
+                    handle.write('\n')
+                    #print onemap, urlmap[onemap], len(self.mydict[onemap]), self.mydict[onemap][0]
+        #sorturl = sorted(self.mydict.items(), key=lambda d: len(d[1]), reverse=True)
+        #for (purl, urls) in sorturl:
+        #    print purl, urls[0]
+        #handle.close()
+
+    def finalize_notuse_2(self):
+        for pdiv in self.alltextdict:
+            for urlmap in self.alltextdict[pdiv]:
+                print pdiv, urlmap, self.alltextdict[pdiv][urlmap]
     
-#    title = GetTitleByTag(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'), None)
-#    print title.encode('utf-8')
-#    GetContentByDiv(CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml'),['<div itemprop="articleBody">'])
+    def finalize_notuse_1(self):
+        sortdict = sorted(self.mydict.items(), key=lambda d: len(d[1]), reverse=True)
+        for (urlmap, urllist) in sortdict:
+            try:
+                urldictlen = len(self.alltextdict[urlmap])
+            except KeyError:
+                urldictlen = 0
+            if urldictlen > 0:
+                print urlmap + '  ' + str(len(urllist))
+                for pdiv in self.alltextdict[urlmap]:
+                    print "Mydict[%s] =" % pdiv, self.alltextdict[urlmap][pdiv]
+                print '-' * 60
 
-#    ReGenerateTextDiv(const.LOG_FILE_L2_2, const.FINGER_FILE_L2)
-#    DisplayTextDiv(const.FINGER_FILE_L2)
+    def parse_text(self, response, crawllevel, order, loopstr):
+        #SaveResponse(response)
+        nowlevel = crawllevel + 1
+        nowloopstr = loopstr + str(crawllevel) + ' ' + str(order) + ':   ' 
+        print nowloopstr
+        returl = ReturnStamp(response)
+        textdict = ReturnTextDiv(response)
+        result = {"url":response.url, "stamp":returl, "textdiv":textdict}
+        self.logfile.write(json.dumps(result))
+        self.logfile.write(',\n')
 
-##    returndict = GenerateRuleViaJson(const.LOG_FILE_L2_1, None)
-##    response = CreateSelectorbyURL('http://stock.sohu.com/20150910/n420784690.shtml')
-##    pagediv = IsContentPage(response, returndict)
-##    if pagediv:
-##        pageitems = GetPageItems(response, pagediv)
-##        for oneitem in pageitems.keys():
-##            print oneitem, pageitems[oneitem].encode('utf-8')
+        if crawllevel <= const.MAX_CRAWL_LEVEL:
+            lx = SgmlLinkExtractor()
+            urls = lx.extract_links(response)
+            noworder = 0
+            for oneurl in urls:
+                noworder += 1
+                yield scrapy.Request(oneurl.url, callback=lambda response, crawllevel=nowlevel, order=noworder, loopstr=nowloopstr: self.parse_text(response, crawllevel, order, loopstr))
+                # in lambda is val para, in call() is ref para, VERY IMPORTANT !!!
+                
+    def parse_testfile(self, response):
+        lx = SgmlLinkExtractor()
+        urls = lx.extract_links(response)
+        readed = 0
+        notreaded = 0
+        for oneurl in urls:
+            handle = OpenMD5File(oneurl.url, 'rb')
+            if handle == False:
+                notreaded += 1
+            else:
+                readed += 1
+                handle.close()
+        print readed, notreaded
 
-#    PrintPageAll('http://stock.sohu.com/20141024/n405416109.shtml')
+    def parse(self, response):    # changed to parse to crawl all home page
+        lx = SgmlLinkExtractor()
+        urls = lx.extract_links(response)
+        noworder = 0
+        for oneurl in urls:
+            noworder += 1
+            yield scrapy.Request(oneurl.url, callback=lambda response, crawllevel=1, order=noworder, loopstr='': self.parse_text(response, crawllevel, order, loopstr))
 
-    eigenlist = GenerateRuleViaJson(const.FINGER_FILE_L2, None)
-#    alljson = ReadFromJson(const.FINGER_FILE_L2)
-#    totalresult = alljson[pTOTALRESULT]
-#    for oneresult in totalresult[:40]:
-#        response = CreateSelectorbyURL(oneresult['url'])
-    
-    for oneresult in urllist.split('\n'):
-        response = CreateSelectorbyURL(oneresult)
-        pagetaglist = IsContentPage(response, eigenlist)
+    def parse_href(self, response):
+        hrefList = response.xpath('//a[starts-with(@onclick,"javascript:")]')
+        for onehref in hrefList:
+            for onescript in onehref.xpath('@onclick').extract():
+                onefunc = DefineStart()
+                onefunc += DefineFunction(const.JAVAFUNC, onescript[11:])
+                hrefval = onehref.xpath('@href')[0].extract()
+                if hrefval == '#':
+                    onefunc += DefineLocation()
+                elif hrefval == '###':
+                    onefunc += DefineLocation()
+                else:
+                    onefunc += DefineLocation()
+                onefunc += DefineSplashGo(response.url)
+                onefunc += DefineProcess(2)
+                onefunc += DefineEnd()
 
-        if pagetaglist:
-            pageitems = GetPageItems(response, pagetaglist)
-            print 'URL : ', oneresult#['url']
-            for oneitem in pageitems.keys():
-                print oneitem, ' : ', pageitems[oneitem].encode('utf-8')
-            print '*' * 80
-            
+                yield scrapy.Request(response.url, self.parse_script, meta=DefineMeta(onefunc))
 
-    
-##    returndict = TestEigenViaJson(const.LOG_FILE_L2_2, const.TEST_FILE_L2_2, eigenlist)
-
-##    totalresult = ReadFromJson('/home/raymon/security/Saurolog_1006-level2')
-##    usedresult = totalresult[pTOTALRESULT]
-##    for oneurl in usedresult:
-##        if oneurl['url']:
-##            oneurl['textdiv'] = GetLeveledDivText(CreateRawbyURL(oneurl['url']))
-##    print usedresult
-##    WriteToJson('/home/raymon/security/Saurolog_1012-level2', totalresult)
+    def parse_script(self, response):
+        jsonresponse = json.loads(response.body_as_unicode())
+        scripturl = response.urljoin(jsonresponse['getreturn'])
+        yield scrapy.Request(scripturl, self.parse)
 
 
-def notuse():    
-    filehandle = open('/home/raymon/security/Saurotest_1007-level2','wb')
-    with open(const.LOG_FILE_L2_2, 'rb') as f:
-	    alljson = json.JSONDecoder().decode(f.read())
-    totalresult = alljson[pTOTALRESULT]
-    for oneurl in totalresult[:30]:
-#        raw = CreateRawbyURL('http://stock.sohu.com/20141024/n405416109.shtml')
-        if oneurl['url']:
-            raw = CreateRawbyURL(oneurl['url'])
-            for onetext in ReturnLeveledTagText(raw, oneurl['url'], const.OUTPUT_FORMAT_DICT):
-                print onetext
-    print 'OK'
+# http://ergoemacs.org/emacs/emacs_copy_cut_current_line.html emacs use
