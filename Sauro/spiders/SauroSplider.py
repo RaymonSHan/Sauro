@@ -15,7 +15,6 @@ from SauroConfigure import *
 if __name__ == '__main__':
     print const.ALLOW
 
-
 const.JAVAFUNC = 'javafunc'
 const.HREFFUNC = 'hreffunc'
 const.FUNCHEAD = 'function main(splash) '
@@ -23,18 +22,56 @@ const.MAX_CRAWL_LEVEL = 2
 const.HOST = 'http://stock.sohu.com/'
 const.ALLOW = 'stock.sohu.com'
 
-class SauroCreateSpider(scrapy.Spider):
-    name = 'SauroCreate'
+const.CONFIGFILE_INIT_OK         = 0
+const.CONFIGFILE_NO_STARTPAGE    = 1
+const.CONFIGFILE_NO_HTTPHEAD     = 2
 
-    allowed_domains = [const.ALLOW]
-    start_urls = [const.HOST]
+const.HTTP                       = 'http://'
+const.HTTPS                      = 'https://'
+
+class notuse1_SauroCreateSpider(scrapy.Spider):
+    name = 'SauroCreate'
+    allowed_domains = []
+    start_urls = []
+
+    def start_requests(self):
+        maybeallowed = []
+        maybestarted = []
+        okconfigured = const.CONFIGFILE_INIT_OK
+
+        if not const.TestLevel in GlobalConfigure:
+        
+        for onesite in SiteConfigureList:
+
+            if not const.StartPage in onesite.keys():
+                okconfigured = const.CONFIGFILE_NO_STARTPAGE
+                break
+            nowstartpage = onesite[const.StartPage]
+            if not nowstartpage.startswith(const.HTTP) and nowstartpage.startswith(const.HTTPS):
+                okconfigured = const.CONFIGFILE_NO_HTTPHEAD
+                break
+            if not const.StartPage in onesite.keys():
+                
+                print nowstartpage
+#            if 
+
+        if okconfigured:
+            self.allowed_domains = maybeallowed
+            self.start_urls = maybestarted
+
+        yield scrapy.Request('http://www.example.com/1.html', self.parse)
+        yield scrapy.Request('http://www.example.com/2.html', self.parse)
+        yield scrapy.Request('http://www.example.com/3.html', self.parse)
+
+    def parse(self, response):
+        print response.url
+            
+class notuse_SauroCreateSpider(scrapy.Spider):
     #start_urls = ["http://stock.sohu.com/stock_scrollnews_152.shtml"]
     #start_urls = ["http://stock.sohu.com/20150914/n421098148.shtml"]
     #start_urls = ["http://stock.sohu.com/20150915/n421130868.shtml"]
 
-    mydict = {}
-    alltextdict = {}
-    loghandle = None
+
         
     #def parse_stampkey(self, response):
     #    strlist = sttry.split()

@@ -5,23 +5,31 @@
 #
 # Wrapping Column 132.
 
-GlobalConfigureDict = {
-    'TestLevel'          : 3,
-    'CrawlLevel'         : 5,
-    'CrawledPath'        : '/home/raymon/security/crawled/',
-    'FingerprintPath'    : '/home/raymon/security/fingerprint/',
+from SauroCommon import *
+
+const.StartPage         = 'StartPage'
+const.SiteName          = 'SiteName'
+const.TestLevel         = 'TestLevel'
+const.CrawlLevel        = 'CrawlLevel'
+const.CrawledPath       = 'CrawledPath'
+const.FingerprintPath   = 'FingerprintPath'
+const.FingerprintFile   = 'FingerprintFile'
+
+GlobalConfigure = {
+    const.TestLevel          : 3,
+    const.CrawlLevel         : 5,
+    const.CrawledPath        : '/home/raymon/security/crawled/',
+    const.FingerprintPath    : '/home/raymon/security/fingerprint/',
 }
 
-SiteConfigureList = [
-    {
-        'StartPage'          : 'stock.sohu.com',
-        'SiteName'           : 'stock.sohu.com',
-        'TestLevel'          : 3,
-        'CrawlLevel'         : 5,
-        'CrawledPath'        : '/home/raymon/security/crawled/',
-        'FingerprintFile'    : '/home/raymon/security/fingerprint/sohu',
-    },
-    {
-        'StartPage'          : 'http://finance.sina.com.cn/stock/',
-    }
-]
+SiteConfigureList = [{
+    const.StartPage          : 'http://stock.sohu.com/',
+    const.SiteName           : 'stock.sohu.com',
+    const.TestLevel          : 3,
+    const.CrawlLevel         : 5,
+    const.CrawledPath        : '/home/raymon/security/crawled/',
+    const.FingerprintFile    : '/home/raymon/security/fingerprint/sohu',
+},
+{
+    const.StartPage          : 'http://finance.sina.com.cn/stock/',
+}]

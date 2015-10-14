@@ -510,8 +510,8 @@ def DefineMeta(func):
 
 class SauroReadSpider(scrapy.Spider):
     name = 'SauroRead'
-    allowed_domains = [const.ALLOW]
-    start_urls = [const.HOST]
+    allowed_domains = []#[const.ALLOW]
+    start_urls = []#[const.HOST]
     jsoncontent = None
     logfile = None
     
@@ -617,7 +617,7 @@ class SauroReadSpider(scrapy.Spider):
             for onestamp in sortdiv:
                 print onestamp
         return
-    
+
 class SauroDownSpider(scrapy.Spider):
     name = "SauroDown"
     allowed_domains = ["stock.sohu.com"]

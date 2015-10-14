@@ -57,6 +57,9 @@ REQ: python v2.7
 RUN: sudo pip install scrapy
 DOC: http://doc.scrapy.org/en/latest/
 
+** INSTALL pip
+error for http://blog.csdn.net/henulwj/article/details/48131393  add in Oct. 14 '15
+
 ** INSTALL docker
 docker request by splash : http://docs.docker.com/linux/step_one/
 RUN: sudo wget -qO- https://get.docker.com/ | sh
@@ -566,3 +569,5 @@ def getdirsize(dir):
    
    
    
+
+http://ergoemacs.org/emacs/emacs_copy_cut_current_line.html config emacs
