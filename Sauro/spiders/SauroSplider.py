@@ -22,12 +22,7 @@ const.MAX_CRAWL_LEVEL = 2
 const.HOST = 'http://stock.sohu.com/'
 const.ALLOW = 'stock.sohu.com'
 
-const.CONFIGFILE_INIT_OK         = 0
-const.CONFIGFILE_NO_STARTPAGE    = 1
-const.CONFIGFILE_NO_HTTPHEAD     = 2
 
-const.HTTP                       = 'http://'
-const.HTTPS                      = 'https://'
 
 class notuse1_SauroCreateSpider(scrapy.Spider):
     name = 'SauroCreate'
@@ -37,31 +32,16 @@ class notuse1_SauroCreateSpider(scrapy.Spider):
     def start_requests(self):
         maybeallowed = []
         maybestarted = []
-        okconfigured = const.CONFIGFILE_INIT_OK
-
-        if not const.TestLevel in GlobalConfigure:
-        
-        for onesite in SiteConfigureList:
-
-            if not const.StartPage in onesite.keys():
-                okconfigured = const.CONFIGFILE_NO_STARTPAGE
-                break
-            nowstartpage = onesite[const.StartPage]
-            if not nowstartpage.startswith(const.HTTP) and nowstartpage.startswith(const.HTTPS):
-                okconfigured = const.CONFIGFILE_NO_HTTPHEAD
-                break
-            if not const.StartPage in onesite.keys():
-                
-                print nowstartpage
-#            if 
-
-        if okconfigured:
+        initresult = InitGlobalConfigure(maybeallowed, maybestarted)
+        if initresult != const.CONFIGFILE_INIT_OK:
+            print 'Error in InitGlobalConfigure', initresult
+            return
+        else:
             self.allowed_domains = maybeallowed
             self.start_urls = maybestarted
 
-        yield scrapy.Request('http://www.example.com/1.html', self.parse)
-        yield scrapy.Request('http://www.example.com/2.html', self.parse)
-        yield scrapy.Request('http://www.example.com/3.html', self.parse)
+        for oneurl in self.start_urls:
+            yield scrapy.Request(oneurl, self.parse)
 
     def parse(self, response):
         print response.url
