@@ -34,6 +34,8 @@ class const:
             raise self.ConstError, "Can't rebind const (%s)" %name 
         self.__dict__[name]=value
 
+const.NOT_FOUND = -1
+
 # create filename by md5 for url, with subdir
 def GetMD5Filename(urlname):
     md5val = hashlib.md5()
@@ -69,7 +71,7 @@ def CreateSelectorbyURL(urlname):
 def InSubString(checkstr, strlist):
     order = 0
     for onelist in strlist:
-        if onelist.find(checkstr) != -1:
+        if onelist.find(checkstr) != const.NOT_FOUND:
             return order
         order += 1
     return -1
@@ -79,7 +81,7 @@ def InSubString(checkstr, strlist):
 def InSuperString(checkstr, strlist):
     order = 0
     for onelist in strlist:
-        if checkstr.find(onelist) != -1:
+        if checkstr.find(onelist) != const.NOT_FOUND:
             return order
         order += 1
     return -1    
@@ -91,7 +93,7 @@ def DivideByEigenvalue(eigenlist, totallist):
     for onelist in totallist:
         hitall = True
         for oneeigen in eigenlist:
-            if onelist.find(oneeigen) == -1:
+            if onelist.find(oneeigen) == const.NOT_FOUND:
                 hitall = False
                 break
         if hitall:
@@ -150,7 +152,7 @@ def FingerprintHaveEigenvalue(fingerprint, eigendictlist):
     for eigenkey in eigendictlist.keys():
         hitall = True
         for oneeigen in eigendictlist[eigenkey]:
-            if fingerprint.find(oneeigen) == -1:
+            if fingerprint.find(oneeigen) == const.NOT_FOUND:
                 hitall = False
                 break
         if hitall:
@@ -166,7 +168,7 @@ def GenerateDictByAlgorithmList(response, algorithmlist, otherpara=[]):
             returndict[onealgo.__name__] = onealgo(response, otherpara)
     else:
         for onealgo in algorithmlist:
-			returndict[onealgo.__name__] = ''
+    	    returndict[onealgo.__name__] = ''
     return returndict
 
 def ReturnStringTotalLenght(totalstring):                   # totalstring is []

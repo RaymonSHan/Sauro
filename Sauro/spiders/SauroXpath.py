@@ -46,13 +46,27 @@ def GetXpathfromTag(tag):
     returnstring += ']'
     return returnstring
 
+import copy
+
+if __name__ == '__main__':
+    d = {"name":"nico", "age":23}  
+    for value in d.values():  
+        print value  
+
+    for key,value in d.viewitems():  
+        print "key=%s, value=%s" % (key, value)  
+
+    for value in d.viewvalues():  
+        print "value=%s" % (value)  
+
+
+
 def GetMultiXpathfromTag(tag):
     returnlist = []
     taglist = tag.split('>')
     for onetag in taglist:
         returnlist.append(GetXpathfromTag(onetag.strip() + '>'))
     return ''.join(returnlist)
-
 
 # IN  : one tag
 # OUT : text stirng
