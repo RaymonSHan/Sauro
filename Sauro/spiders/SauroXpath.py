@@ -49,17 +49,10 @@ def GetXpathfromTag(tag):
 import copy
 
 if __name__ == '__main__':
-    d = {"name":"nico", "age":23}  
-    for value in d.values():  
-        print value  
-
-    for key,value in d.viewitems():  
-        print "key=%s, value=%s" % (key, value)  
-
-    for value in d.viewvalues():  
-        print "value=%s" % (value)  
-
-
+    c = ['asdfadsf', 'asdf']
+    ttest = ('a', 'b', c)
+    c.append( '14324234234')
+    print ttest
 
 def GetMultiXpathfromTag(tag):
     returnlist = []

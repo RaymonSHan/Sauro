@@ -152,7 +152,7 @@ curl -X POST -H 'content-type: application/json' \
 only this is OK
 
 * TODO LEARN python DOING ex40
-python: http://learnpythonthehardway.org/book/
+** python: http://learnpythonthehardway.org/book/
 put in top of .py for encode : (in ex1) -*- coding: utf-8 -*-
 | python                                                                  | C++    | comment                                         |
 |-------------------------------------------------------------------------+--------+-------------------------------------------------|
@@ -172,6 +172,25 @@ put in top of .py for encode : (in ex1) -*- coding: utf-8 -*-
 | for val in range(x,y): \ while cond:                                    |        |                                                 |
 | keywords                                                                |        | http://learnpythonthehardway.org/book/ex37.html |
 | print '#'.join(stuff[3:7])                                              |        |                                                 |
+
+** python http://www.liaoxuefeng.com/wiki/001374738125095c955c1e6d8bb493182103fac9270762a000/ nice lesson
+print r'\\\t\\' 	-> \\\t\\
+isinstance('abc', Iterable) # str是否可迭代
+for i, value in enumerate(['A', 'B', 'C']): print i, value
+[x * x for x in range(1, 11) if x % 2 == 0]
+[m + n for m in 'ABC' for n in 'XYZ']
+
+def add(x, y, f): return f(x) + f(y)
+>>> def set_score(self, score): self.score = score
+>>> Student.set_score = MethodType(set_score, None, Student)
+
+Hello = type('Hello', (object,), dict(hello=fn)) # 创建Hello class
+[x for x in os.listdir('.') if os.path.isfile(x) and os.path.splitext(x)[1]=='.py']
+
+** Decorator 装饰器 http://www.cnblogs.com/rhcad/archive/2011/12/21/2295507.html
+** PyPY http://www.ibm.com/developerworks/cn/opensource/os-pypy-intro/ and splider
+** about py http://www.oschina.net/translate/why_pypy_is_the_future_of_python more things in future
+** super http://www.jb51.net/article/66912.htm
 
 * DONE LEARN scrapy : DONE FAQ
   CLOSED: [2015-09-01 Tue 14:47]
@@ -458,3 +477,52 @@ http://www.blogjava.net/Steven-bot/articles/361974.html java path
 https://ignaciopp.wordpress.com/2009/06/17/emacs-indentunindent-region-as-a-block-using-the-tab-key/ key tab
 * bookmark
 ** http://www.daimg.com/font/chinese/list_84_18.html font chinese font
+* ethereum
+** start
+http://8btc.com/thread-25411-1-1.html chinese start
+http://ethfans.org/posts/ethereum-whitepaper white paper in chinese
+http://ethfans.org/posts/yi-tai-fang-de-jin-hua project list
+http://8btc.com/thread-25411-1-1.html step
+
+** install
+*** share host folder in ubuntu
+http://blog.csdn.net/zz962/article/details/7706755
+http://bbs.csdn.net/topics/350258010
+and should overwrite files in /mnt/hgfs !!!! when install vmtools
+*** python virtualenv # not use yet
+http://www.cnblogs.com/tk091/p/3700013.html
+sudo pip install virtualenv
+/code# virtualenv test_env --no-site-packages          # create env # for not use public packets
+/code/test_env# source ./bin/activate                  # enter env
+/code/test_env# deactivate                             # leave env
+*** install pyethereum
+https://github.com/ethereum/pyethereum/wiki/Developer-Notes
+sudo su
+apt-get install python-dev
+apt-get install libssl-dev
+git clone https://github.com/ethereum/pyethereum/
+cd pyethereum
+pip install -r requirements.txt
+python setup.py install
+*** install testrpc
+https://github.com/ConsenSys/eth-testrpc
+pip install eth-testrpc
+testrpc                                                # run
+*** prepare solidity
+https://ethereum.github.io/solidity/                   # documents
+https://github.com/ethereum/webthree-umbrella/wiki     # bulid step
+sudo su
+apt-add-repository ppa:george-edison55/cmake-3.x
+apt-get -y update
+apt-get -y install language-pack-en-base
+dpkg-reconfigure locales
+apt-get -y install software-properties-common
+wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | apt-key add -
+add-apt-repository "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.7 main"
+add-apt-repository -y ppa:ethereum/ethereum-qt
+add-apt-repository -y ppa:ethereum/ethereum
+add-apt-repository -y ppa:ethereum/ethereum-dev
+apt-get -y update
+apt-get -y upgrade
+*** download and bulid solidity
+https://github.com/ethereum/webthree-umbrella/wiki/Linux--Generic-Building
